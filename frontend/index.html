@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NeuroComposer | Enterprise AI Music</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/combine/npm/tone@14.7.58,npm/@magenta/music@1.23.1/es6/core.js,npm/focus-visible@5,npm/html-midi-player@1.5.0"></script>
+</head>
+<body>
+    <div class="corporate-mesh">
+        <div class="mesh-shape shape-1"></div>
+        <div class="mesh-shape shape-2"></div>
+        <div class="mesh-grid"></div>
+    </div>
+    
+    <div class="container">
+        <header class="app-header">
+            <div class="brand">
+                <svg class="brand-logo" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <h1>NeuroComposer</h1>
+            </div>
+            <p>AI-Generated Music Conditioned on Human Emotion</p>
+        </header>
+
+        <main class="dashboard">
+            <section class="panel glass-panel controls">
+                <div class="panel-heading">
+                    <h2>AI Settings</h2>
+                    <span class="status-badge">System Ready</span>
+                </div>
+                
+                <div class="input-group">
+                    <label>Select Mood</label>
+                    <div class="segmented-control">
+                        <input type="radio" id="mood-happy" name="mood" value="happy" checked>
+                        <label for="mood-happy" class="segment">Happy (Major)</label>
+                        
+                        <input type="radio" id="mood-sad" name="mood" value="sad">
+                        <label for="mood-sad" class="segment">Sad (Minor)</label>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <div class="label-row">
+                        <label for="creativity-slider">Creativity Level</label>
+                        <span id="slider-value" class="value-display">0.8</span>
+                    </div>
+                    <input type="range" id="creativity-slider" class="corporate-slider" min="0.1" max="1.5" step="0.1" value="0.8">
+                    <div class="slider-ticks">
+                        <span>Predictable</span>
+                        <span>Experimental</span>
+                    </div>
+                </div>
+
+                <button id="generate-btn" class="btn-corporate">
+                    <span id="btn-text">Generate Music</span>
+                    <svg id="loading-spinner" class="spinner hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <circle cx="12" cy="12" r="10" stroke-width="3" stroke-dasharray="32" stroke-linecap="round"></circle>
+                    </svg>
+                </button>
+            </section>
+
+            <section class="panel glass-panel visualizer">
+                <midi-visualizer type="waterfall" id="my-visualizer"></midi-visualizer>
+                <div class="player-wrapper">
+                    <midi-player id="my-player" visualizer="#my-visualizer"></midi-player>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
