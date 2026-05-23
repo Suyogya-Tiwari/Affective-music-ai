@@ -1,5 +1,6 @@
 import os
 import numpy as np
+import pickle
 from tensorflow.keras.callbacks import ModelCheckpoint, EarlyStopping
 from network import create_network
 
@@ -25,9 +26,19 @@ def train_network(processed_dir="../data/processed", model_dir="."):
     
     print(f"Data loaded! Vocab size: {vocab_size}, Sequence length: {sequence_length}")
 
+    # Load emotion map to determine number of emotions
+    emotion_map_path = os.path.join(processed_dir, "emotion_map.pkl")
+    if os.path.exists(emotion_map_path):
+        with open(emotion_map_path, 'rb') as f:
+            emotion_map = pickle.load(f)
+        num_emotions = len(emotion_map)
+    else:
+        num_emotions = 2
+        print("WARNING: emotion_map.pkl not found, defaulting to 2 emotions.")
+
     # 2. Build the Neural Network
-    print("Building the AI Architecture...")
-    model = create_network(sequence_length=sequence_length, vocab_size=vocab_size)
+    print(f"Building the AI Architecture for {num_emotions} emotions...")
+    model = create_network(sequence_length=sequence_length, vocab_size=vocab_size, num_emotions=num_emotions)
     
     # 3. Setup Training Rules (Callbacks)
     # We want to save the "weights" (the brain's memories) to a file named model.h5
