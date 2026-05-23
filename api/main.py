@@ -1,5 +1,6 @@
 import os
 import numpy as np
+import pickle
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
@@ -29,10 +30,11 @@ MODEL = None
 PITCH_NAMES = None
 NOTE_TO_INT = None
 INT_TO_NOTE = None
+EMOTION_MAP = None
 
 def load_ai_assets():
     """Loads the trained weights and vocabulary into memory on server startup."""
-    global MODEL, PITCH_NAMES, NOTE_TO_INT, INT_TO_NOTE
+    global MODEL, PITCH_NAMES, NOTE_TO_INT, INT_TO_NOTE, EMOTION_MAP
     
     base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     model_path = os.path.join(base_dir, "model", "model.h5")
@@ -53,7 +55,16 @@ def load_ai_assets():
         # Create dictionaries to translate Numbers back into Musical Notes
         NOTE_TO_INT = dict((n, i) for i, n in enumerate(PITCH_NAMES))
         INT_TO_NOTE = dict((i, n) for i, n in enumerate(PITCH_NAMES))
-        print("AI Model successfully loaded into memory!")
+        
+        # Load Emotion Map
+        emotion_map_path = os.path.join(base_dir, "data", "processed", "emotion_map.pkl")
+        if os.path.exists(emotion_map_path):
+            with open(emotion_map_path, 'rb') as f:
+                EMOTION_MAP = pickle.load(f)
+        else:
+            EMOTION_MAP = {"happy": 0, "sad": 1}
+            
+        print("AI Model and assets successfully loaded into memory!")
         return True
     except Exception as e:
         print(f"Error loading AI assets: {e}")
@@ -85,7 +96,13 @@ async def generate_music(request: GenerateRequest):
         raise HTTPException(status_code=500, detail="AI Model not trained yet. Run train.py first!")
         
     # 1. Translate Mood String to Integer
-    mood_int = 0 if request.mood.lower() == "happy" else 1
+    mood_str = request.mood.lower()
+    if mood_str not in EMOTION_MAP:
+        # Fallback to happy if not found, or could raise an error
+        mood_int = 0
+    else:
+        mood_int = EMOTION_MAP[mood_str]
+        
     mood_input = np.array([mood_int])
     
     # 2. Create a random starting sequence (seed) to kickstart the AI
@@ -124,31 +141,53 @@ async def generate_music(request: GenerateRequest):
             notes_in_chord = pattern_str.split('.')
             notes = []
             for current_note in notes_in_chord:
-                new_note = note.Note(int(current_note))
+                # normalOrder gives 0-11. We shift it to octave 4 (+60)
+                new_note = note.Note(int(current_note) + 60)
                 new_note.storedInstrument = instrument.Piano()
                 notes.append(new_note)
             new_chord = chord.Chord(notes)
             new_chord.offset = offset
+            new_chord.quarterLength = 0.5
             output_notes.append(new_chord)
         # If the AI predicted a single Note (e.g., 'C4')
         else:
             new_note = note.Note(pattern_str)
             new_note.offset = offset
+            new_note.quarterLength = 0.5
             new_note.storedInstrument = instrument.Piano()
             output_notes.append(new_note)
             
         # Increase offset so notes play sequentially, not all at the exact same time
         offset += 0.5
         
-    midi_stream = stream.Stream(output_notes)
+    # 4. Convert notes to a proper MIDI file
+    from music21 import stream, tempo, instrument as m21_instrument
     
-    # Save the file temporarily on the server
-    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    output_filepath = os.path.join(base_dir, "api", "generated_track.mid")
-    midi_stream.write('midi', fp=output_filepath)
+    score = stream.Score()
+    part = stream.Part()
+    
+    # Add essential MIDI headers that Web Players require (Tempo and Instrument)
+    part.insert(0, m21_instrument.Piano())
+    part.insert(0, tempo.MetronomeMark(number=120))
+    
+    # Insert all generated notes
+    for n in output_notes:
+        part.insert(n.offset, n)
+        
+    score.insert(0, part)
+    
+    output_filepath = os.path.join(os.path.dirname(__file__), "generated_track.mid")
+    score.write('midi', fp=output_filepath)
     
     # 5. Send the physical .mid file back over the internet to the user's browser
-    return FileResponse(output_filepath, media_type="audio/midi", filename="ai_generated_music.mid")
+    return {"status": "Success", "message": "Track generated successfully."}
+
+@app.get("/track")
+async def get_track():
+    output_filepath = os.path.join(os.path.dirname(__file__), "generated_track.mid")
+    if os.path.exists(output_filepath):
+        return FileResponse(output_filepath, media_type="audio/midi")
+    return {"error": "Track not found"}
 
 @app.get("/")
 def read_root():

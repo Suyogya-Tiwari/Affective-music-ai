@@ -24,22 +24,27 @@ document.addEventListener('DOMContentLoaded', () => {
 
         try {
             // Fetch from backend
-            const response = await fetch(`http://localhost:8000/generate?mood=${mood}&creativity=${creativity}`, {
-                method: 'POST'
+            const response = await fetch('http://localhost:8000/generate', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ mood: mood, creativity: parseFloat(creativity) })
             });
 
             if (!response.ok) {
                 throw new Error(`Server responded with ${response.status}`);
             }
 
-            // Get MIDI blob
-            const blob = await response.blob();
+            // Instead of dealing with browser blob policies, we tell the components to fetch the file natively!
+            // Adding a timestamp prevents the browser from caching the old track
+            const trackUrl = 'http://localhost:8000/track?t=' + new Date().getTime();
             
-            // Create a local URL for the blob
-            const midiUrl = URL.createObjectURL(blob);
+            const midiPlayer = document.getElementById('my-player');
+            const visualizer = document.getElementById('my-visualizer');
             
-            // Pass the URL to the magenta html-midi-player
-            midiPlayer.src = midiUrl;
+            if (midiPlayer) midiPlayer.setAttribute('src', trackUrl);
+            if (visualizer) visualizer.setAttribute('src', trackUrl);
 
             // Optional: Auto-play when ready
             // midiPlayer.start();
