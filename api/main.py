@@ -22,8 +22,9 @@ app.add_middleware(
 
 # Define the exact format of the JSON request the frontend will send us
 class GenerateRequest(BaseModel):
-    mood: str          # "happy" or "sad"
-    creativity: float  # e.g., 0.1 to 1.5 (This is the "Temperature" slider)
+    mood: str
+    creativity: float = 0.8
+    tempo: int = 120
 
 # Global variables to hold the AI brain in memory so it responds instantly
 MODEL = None
@@ -166,9 +167,9 @@ async def generate_music(request: GenerateRequest):
     score = stream.Score()
     part = stream.Part()
     
-    # Add essential MIDI headers that Web Players require (Tempo and Instrument)
+    # Add essential MIDI headers that Web Players require
     part.insert(0, m21_instrument.Piano())
-    part.insert(0, tempo.MetronomeMark(number=120))
+    part.insert(0, tempo.MetronomeMark(number=request.tempo))
     
     # Insert all generated notes
     for n in output_notes:

@@ -1,14 +1,29 @@
 document.addEventListener('DOMContentLoaded', () => {
     const slider = document.getElementById('creativity-slider');
-    const sliderValueDisplay = document.getElementById('slider-value');
+    const creativityInput = document.getElementById('creativity-input');
+    const tempoSlider = document.getElementById('tempo-slider');
+    const tempoInput = document.getElementById('tempo-input');
     const generateBtn = document.getElementById('generate-btn');
     const btnText = document.getElementById('btn-text');
     const spinner = document.getElementById('loading-spinner');
     const midiPlayer = document.getElementById('my-player');
 
-    // Update creativity slider text in real-time
+    // Sync creativity slider and input
     slider.addEventListener('input', (e) => {
-        sliderValueDisplay.textContent = parseFloat(e.target.value).toFixed(1);
+        creativityInput.value = parseFloat(e.target.value).toFixed(1);
+    });
+    creativityInput.addEventListener('input', (e) => {
+        let val = parseFloat(e.target.value);
+        if(!isNaN(val)) slider.value = val;
+    });
+
+    // Sync tempo slider and input
+    tempoSlider.addEventListener('input', (e) => {
+        tempoInput.value = e.target.value;
+    });
+    tempoInput.addEventListener('input', (e) => {
+        let val = parseInt(e.target.value);
+        if(!isNaN(val)) tempoSlider.value = val;
     });
 
     // Handle Generation
@@ -16,6 +31,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Get Inputs
         const mood = document.querySelector('input[name="mood"]:checked').value;
         const creativity = slider.value;
+        const tempo = tempoSlider.value;
 
         // UI Loading State
         generateBtn.disabled = true;
@@ -29,7 +45,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ mood: mood, creativity: parseFloat(creativity) })
+                body: JSON.stringify({ mood: mood, creativity: parseFloat(creativity), tempo: parseInt(tempo) })
             });
 
             if (!response.ok) {
@@ -39,6 +55,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Instead of dealing with browser blob policies, we tell the components to fetch the file natively!
             // Adding a timestamp prevents the browser from caching the old track
             const trackUrl = 'http://localhost:8000/track?t=' + new Date().getTime();
+            window.currentTrackUrl = trackUrl; // Save for download button
             
             const midiPlayer = document.getElementById('my-player');
             const visualizer = document.getElementById('my-visualizer');
@@ -66,4 +83,21 @@ document.addEventListener('DOMContentLoaded', () => {
             }, 3000);
         }
     });
+
+    // Handle DAW Download
+    const downloadBtn = document.getElementById('download-btn');
+    if (downloadBtn) {
+        downloadBtn.addEventListener('click', () => {
+            if (window.currentTrackUrl) {
+                const a = document.createElement('a');
+                a.href = window.currentTrackUrl;
+                a.download = 'NeuroComposer_Track.mid';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+            } else {
+                alert("Please generate a track first!");
+            }
+        });
+    }
 });
