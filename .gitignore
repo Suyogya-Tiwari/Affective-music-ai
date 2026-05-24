@@ -6,9 +6,9 @@ __pycache__/
 # Ignore training data (too large for GitHub)
 data/raw_midi/*
 !data/raw_midi/.gitkeep
-data/processed/*
-!data/processed/.gitkeep
+# data/processed/*
+# !data/processed/.gitkeep
 
 # Ignore large model weights
-model/*.h5
-model/*.keras
+# model/*.h5
+# model/*.keras

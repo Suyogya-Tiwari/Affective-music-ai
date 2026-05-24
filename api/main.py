@@ -29,25 +29,35 @@ class GenerateRequest(BaseModel):
 # Global variables to hold the AI brain in memory so it responds instantly
 MODEL = None
 PITCH_NAMES = None
+# Global variables to hold the AI brain in memory so it responds instantly
+MODEL = None
+PITCH_NAMES = None
 NOTE_TO_INT = None
 INT_TO_NOTE = None
 EMOTION_MAP = None
+LOAD_ERROR = "Unknown"
 
 def load_ai_assets():
     """Loads the trained weights and vocabulary into memory on server startup."""
-    global MODEL, PITCH_NAMES, NOTE_TO_INT, INT_TO_NOTE, EMOTION_MAP
+    global MODEL, PITCH_NAMES, NOTE_TO_INT, INT_TO_NOTE, EMOTION_MAP, LOAD_ERROR
     
     base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    model_path = os.path.join(base_dir, "model", "model.h5")
+    model_path = os.path.join(base_dir, "model", "model.weights.h5")
     data_path = os.path.join(base_dir, "data", "processed", "network_data.npz")
     
     if not os.path.exists(model_path) or not os.path.exists(data_path):
-        print("WARNING: model.h5 or network_data.npz not found. You must train the model first!")
+        LOAD_ERROR = f"Files missing! model={os.path.exists(model_path)}, data={os.path.exists(data_path)}"
+        print("WARNING: model.weights.h5 or network_data.npz not found. You must train the model first!")
         return False
         
     try:
-        # Load the Keras brain
-        MODEL = load_model(model_path)
+        import sys
+        if base_dir not in sys.path:
+            sys.path.append(base_dir)
+        
+        from model.network import create_network
+        import pickle
+        import json
         
         # Load the vocabulary mapping
         data = np.load(data_path, allow_pickle=True)
@@ -56,6 +66,12 @@ def load_ai_assets():
         # Create dictionaries to translate Numbers back into Musical Notes
         NOTE_TO_INT = dict((n, i) for i, n in enumerate(PITCH_NAMES))
         INT_TO_NOTE = dict((i, n) for i, n in enumerate(PITCH_NAMES))
+        
+        # Dynamically build the architecture natively so we don't rely on Keras JSON parsing!
+        MODEL = create_network(sequence_length=100, vocab_size=len(PITCH_NAMES), num_emotions=2)
+        
+        # Load only the raw float weights from the file (100% immune to version mismatches)
+        MODEL.load_weights(model_path)
         
         # Load Emotion Map
         emotion_map_path = os.path.join(base_dir, "data", "processed", "emotion_map.pkl")
@@ -68,6 +84,8 @@ def load_ai_assets():
         print("AI Model and assets successfully loaded into memory!")
         return True
     except Exception as e:
+        import traceback
+        LOAD_ERROR = traceback.format_exc()
         print(f"Error loading AI assets: {e}")
         return False
 
@@ -94,7 +112,7 @@ async def generate_music(request: GenerateRequest):
     """The core endpoint that the website calls to get new music."""
     
     if MODEL is None or PITCH_NAMES is None:
-        raise HTTPException(status_code=500, detail="AI Model not trained yet. Run train.py first!")
+        raise HTTPException(status_code=500, detail=f"Model failed to load: {LOAD_ERROR}")
         
     # 1. Translate Mood String to Integer
     mood_str = request.mood.lower()
