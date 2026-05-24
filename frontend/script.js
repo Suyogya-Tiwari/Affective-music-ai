@@ -38,9 +38,13 @@ document.addEventListener('DOMContentLoaded', () => {
         btnText.textContent = "Composing...";
         spinner.classList.remove('hidden');
 
+        // Determine the API URL based on where the frontend is hosted
+        const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.hostname === '';
+        const API_BASE_URL = isLocalhost ? 'http://localhost:8000' : 'https://neurocomposer-api.onrender.com';
+
         try {
             // Fetch from backend
-            const response = await fetch('http://localhost:8000/generate', {
+            const response = await fetch(`${API_BASE_URL}/generate`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -54,7 +58,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Instead of dealing with browser blob policies, we tell the components to fetch the file natively!
             // Adding a timestamp prevents the browser from caching the old track
-            const trackUrl = 'http://localhost:8000/track?t=' + new Date().getTime();
+            const trackUrl = `${API_BASE_URL}/track?t=` + new Date().getTime();
             window.currentTrackUrl = trackUrl; // Save for download button
             
             const midiPlayer = document.getElementById('my-player');
