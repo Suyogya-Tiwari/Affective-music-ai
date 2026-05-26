@@ -3,7 +3,7 @@ import glob
 import pickle
 from music21 import converter, instrument, note, chord
 
-def preprocess_midi_data(data_dir="../data/raw_midi", save_dir="../data/processed"):
+def preprocess_midi_data(data_dir="../data/raw", save_dir="../data/processed"):
     """
     Reads all MIDI files from emotion-labeled subdirectories.
     Extracts notes/chords and maps the folder name to an emotion integer ID.
@@ -76,6 +76,6 @@ def preprocess_midi_data(data_dir="../data/raw_midi", save_dir="../data/processe
 
 if __name__ == "__main__":
     base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    raw_dir = os.path.join(base_dir, "data", "raw_midi")
+    raw_dir = os.path.join(base_dir, "data", "raw")
     processed_dir = os.path.join(base_dir, "data", "processed")
     preprocess_midi_data(data_dir=raw_dir, save_dir=processed_dir)

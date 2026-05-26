@@ -69,7 +69,7 @@ def train_network(processed_dir="../data/processed", model_dir="."):
     model.fit(
         [network_input_notes, network_input_moods], 
         network_output, 
-        epochs=50,       # Number of times the AI loops through the entire dataset
+        epochs=2,       # Number of times the AI loops through the entire dataset
         batch_size=64,   # How many sequences the AI looks at before updating its memory
         callbacks=callbacks_list
     )

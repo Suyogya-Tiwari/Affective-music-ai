@@ -32,6 +32,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const mood = document.querySelector('input[name="mood"]:checked').value;
         const creativity = slider.value;
         const tempo = tempoSlider.value;
+        const duration = document.getElementById('duration-select').value;
 
         // UI Loading State
         generateBtn.disabled = true;
@@ -49,7 +50,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ mood: mood, creativity: parseFloat(creativity), tempo: parseInt(tempo) })
+                body: JSON.stringify({ 
+                    mood: mood, 
+                    creativity: parseFloat(creativity), 
+                    tempo: parseInt(tempo),
+                    duration: parseInt(duration)
+                })
             });
 
             if (!response.ok) {

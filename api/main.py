@@ -25,6 +25,7 @@ class GenerateRequest(BaseModel):
     mood: str
     creativity: float = 0.8
     tempo: int = 120
+    duration: int = 30
 
 # Global variables to hold the AI brain in memory so it responds instantly
 MODEL = None
@@ -68,7 +69,7 @@ def load_ai_assets():
         INT_TO_NOTE = dict((i, n) for i, n in enumerate(PITCH_NAMES))
         
         # Dynamically build the architecture natively so we don't rely on Keras JSON parsing!
-        MODEL = create_network(sequence_length=100, vocab_size=len(PITCH_NAMES), num_emotions=2)
+        MODEL = create_network(sequence_length=100, vocab_size=len(PITCH_NAMES), num_emotions=6)
         
         # Load only the raw float weights from the file (100% immune to version mismatches)
         MODEL.load_weights(model_path)
@@ -79,7 +80,7 @@ def load_ai_assets():
             with open(emotion_map_path, 'rb') as f:
                 EMOTION_MAP = pickle.load(f)
         else:
-            EMOTION_MAP = {"happy": 0, "sad": 1}
+            EMOTION_MAP = {"happy": 0, "sad": 1, "energetic": 2, "romantic": 3, "dark": 4, "dreamy": 5}
             
         print("AI Model and assets successfully loaded into memory!")
         return True
@@ -130,8 +131,13 @@ async def generate_music(request: GenerateRequest):
     
     prediction_output = []
     
-    # 3. Generate 100 new notes one-by-one
-    for _ in range(100):
+    # Calculate exactly how many notes are needed to fill the requested duration (in seconds)
+    # tempo = Beats Per Minute. 1 Beat = 1 Quarter Note. Our AI outputs 8th notes (0.5 quarter length).
+    # notes per second = (tempo / 60) * 2
+    notes_to_generate = int((request.tempo / 60.0) * request.duration * 2.0)
+    
+    # 3. Generate new notes one-by-one
+    for _ in range(notes_to_generate):
         # Format input for the model
         prediction_input = np.reshape(pattern, (1, sequence_length, 1))
         prediction_input = prediction_input / float(len(PITCH_NAMES))

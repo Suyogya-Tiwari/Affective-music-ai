@@ -33,15 +33,36 @@
                     <span class="status-badge">System Ready</span>
                 </div>
                 
-                <div class="input-group" title="Happy uses Major keys, Sad uses Minor keys.">
-                    <label>Select Mood</label>
-                    <div class="segmented-control">
+                <div class="input-group" title="Select the core emotional driver for the AI composer.">
+                    <label>Select Emotion</label>
+                    <div class="emotion-grid">
                         <input type="radio" id="mood-happy" name="mood" value="happy" checked>
-                        <label for="mood-happy" class="segment">Happy</label>
+                        <label for="mood-happy" class="emotion-segment">Happy</label>
                         
                         <input type="radio" id="mood-sad" name="mood" value="sad">
-                        <label for="mood-sad" class="segment">Sad</label>
+                        <label for="mood-sad" class="emotion-segment">Sad</label>
+
+                        <input type="radio" id="mood-energetic" name="mood" value="energetic">
+                        <label for="mood-energetic" class="emotion-segment">Energetic</label>
+
+                        <input type="radio" id="mood-romantic" name="mood" value="romantic">
+                        <label for="mood-romantic" class="emotion-segment">Romantic</label>
+
+                        <input type="radio" id="mood-dark" name="mood" value="dark">
+                        <label for="mood-dark" class="emotion-segment">Dark</label>
+
+                        <input type="radio" id="mood-dreamy" name="mood" value="dreamy">
+                        <label for="mood-dreamy" class="emotion-segment">Dreamy</label>
                     </div>
+                </div>
+
+                <div class="input-group" title="Select how long you want the generated track to be.">
+                    <label>Track Duration</label>
+                    <select id="duration-select" class="dropdown-corporate">
+                        <option value="30">30 Seconds</option>
+                        <option value="60">1 Minute</option>
+                        <option value="120">2 Minutes</option>
+                    </select>
                 </div>
 
 
