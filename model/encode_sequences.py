@@ -70,8 +70,8 @@ def encode_sequences(processed_dir="../data/processed", sequence_length=100):
     # Format moods as a numpy array
     network_input_moods = np.array(network_input_moods)
     
-    # One-hot encode the output (e.g., 3 becomes [0, 0, 0, 1, 0, ...])
-    network_output = to_categorical(network_output, num_classes=vocab_size)
+    # Save output as integer labels to save RAM (used with sparse_categorical_crossentropy)
+    network_output = np.array(network_output)
     
     # Save everything into a compressed numpy zip file (.npz)
     save_path = os.path.join(processed_dir, "network_data.npz")

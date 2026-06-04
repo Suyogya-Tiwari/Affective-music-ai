@@ -44,11 +44,11 @@ def load_ai_assets():
     
     base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     model_path = os.path.join(base_dir, "model", "model.weights.h5")
-    data_path = os.path.join(base_dir, "data", "processed", "network_data.npz")
+    data_path = os.path.join(base_dir, "data", "processed", "pitchnames.pkl")
     
     if not os.path.exists(model_path) or not os.path.exists(data_path):
         LOAD_ERROR = f"Files missing! model={os.path.exists(model_path)}, data={os.path.exists(data_path)}"
-        print("WARNING: model.weights.h5 or network_data.npz not found. You must train the model first!")
+        print("WARNING: model.weights.h5 or pitchnames.pkl not found. You must train the model first!")
         return False
         
     try:
@@ -61,8 +61,8 @@ def load_ai_assets():
         import json
         
         # Load the vocabulary mapping
-        data = np.load(data_path, allow_pickle=True)
-        PITCH_NAMES = data['pitchnames']
+        with open(data_path, 'rb') as f:
+            PITCH_NAMES = pickle.load(f)
         
         # Create dictionaries to translate Numbers back into Musical Notes
         NOTE_TO_INT = dict((n, i) for i, n in enumerate(PITCH_NAMES))
@@ -131,10 +131,19 @@ async def generate_music(request: GenerateRequest):
     
     prediction_output = []
     
-    # Calculate exactly how many notes are needed to fill the requested duration (in seconds)
-    # tempo = Beats Per Minute. 1 Beat = 1 Quarter Note. Our AI outputs 8th notes (0.5 quarter length).
-    # notes per second = (tempo / 60) * 2
-    notes_to_generate = int((request.tempo / 60.0) * request.duration * 2.0)
+    # Calculate exactly how many notes are needed to fill the requested duration
+    # We must account for the Humanizer's different note lengths based on the emotion!
+    avg_dur = 0.55
+    if mood_str == "sad": avg_dur = 0.8
+    elif mood_str == "dark": avg_dur = 1.0
+    elif mood_str == "happy": avg_dur = 0.45
+    elif mood_str == "energetic": avg_dur = 0.3
+    elif mood_str == "dreamy": avg_dur = 0.7
+    elif mood_str == "romantic": avg_dur = 0.65
+    
+    # tempo / 60 = Beats Per Second. 
+    total_beats_needed = (request.tempo / 60.0) * request.duration
+    notes_to_generate = int(total_beats_needed / avg_dur)
     
     # 3. Generate new notes one-by-one
     for _ in range(notes_to_generate):
@@ -156,34 +165,113 @@ async def generate_music(request: GenerateRequest):
         pattern = np.append(pattern, index)
         pattern = pattern[1:]
         
+    # --- CONSTRAINED DECODING SCALES ---
+    # We define the strict music theory intervals (Pitch Classes) for each emotion.
+    # 0=C, 1=C#, 2=D, 3=D#, 4=E, 5=F, 6=F#, 7=G, 8=G#, 9=A, 10=A#, 11=B
+    SCALES = {
+        "happy": [0, 2, 4, 5, 7, 9, 11],       # C Major (Bright, uplifting)
+        "sad": [0, 2, 3, 5, 7, 8, 10],         # C Minor (Melancholy)
+        "dark": [0, 1, 3, 5, 7, 8, 10],        # C Phrygian (Ominous, dark)
+        "energetic": [0, 2, 4, 5, 7, 9, 10],   # C Mixolydian (Driving, bouncy)
+        "romantic": [1, 3, 5, 6, 8, 10, 0],    # Db Major (Rich, warm)
+        "dreamy": [0, 2, 4, 6, 7, 9, 11],      # C Lydian (Ethereal, floaty)
+    }
+    
+    current_scale = SCALES.get(mood_str, SCALES["happy"])
+    
+    def snap_to_scale(midi_pitch, allowed_intervals):
+        """Mathematical Autocorrect: Forces a wrong note into the correct emotional scale."""
+        octave = midi_pitch // 12
+        pitch_class = midi_pitch % 12
+        # Find the absolute closest allowed note in the scale
+        closest_pitch = min(allowed_intervals, key=lambda x: min(abs(x - pitch_class), 12 - abs(x - pitch_class)))
+        return (octave * 12) + closest_pitch
+
     # 4. Convert the list of predicted strings back into a physical MIDI file
     offset = 0
     output_notes = []
+    final_tempo = request.tempo
     
     for pattern_str in prediction_output:
-        # If the AI predicted a Chord (e.g., '4.7.11')
+        import random
+        
+        # --- CONSTRAINED VELOCITY & SUSTAIN PEDAL SCALING ---
+        # We respect your chosen Tempo slider, but we force Velocity and Sustain
+        sustain_multiplier = 1.0 # Default: No overlap
+        
+        if mood_str == "sad":
+            dur = random.uniform(0.6, 1.0)
+            vel = random.randint(50, 75)
+            sustain_multiplier = 2.0 # Slight bleed
+        elif mood_str == "dark":
+            dur = random.uniform(0.8, 1.2)
+            vel = random.randint(40, 70)
+            sustain_multiplier = 2.5 # Brooding bleed
+        elif mood_str == "happy":
+            dur = random.uniform(0.3, 0.6)
+            vel = random.randint(85, 110)
+            sustain_multiplier = 1.0 # Staccato, punchy
+        elif mood_str == "energetic":
+            dur = random.uniform(0.2, 0.4)
+            vel = random.randint(100, 127)
+            sustain_multiplier = 0.8 # Very punchy, aggressive
+        elif mood_str == "dreamy":
+            dur = random.uniform(0.5, 0.9)
+            vel = random.randint(60, 85)
+            sustain_multiplier = 6.0 # Massive sustain pedal, notes ring forever
+        elif mood_str == "romantic":
+            dur = random.uniform(0.5, 0.8)
+            vel = random.randint(70, 95)
+            sustain_multiplier = 4.0 # Heavy sustain
+        else:
+            dur = random.uniform(0.4, 0.7)
+            vel = random.randint(70, 115)
+            
+        physical_dur = dur * sustain_multiplier
+            
+        # Parse the AI's prediction
         if ('.' in pattern_str) or pattern_str.isdigit():
             notes_in_chord = pattern_str.split('.')
             notes = []
             for current_note in notes_in_chord:
-                # normalOrder gives 0-11. We shift it to octave 4 (+60)
-                new_note = note.Note(int(current_note) + 60)
+                pitch_val = int(current_note) + 60
+                
+                # Apply Octave Constraints for specific vibes
+                if mood_str == "dark": pitch_val -= 12   # Shift bass down
+                if mood_str == "dreamy": pitch_val += 12 # Shift treble up
+                
+                # THE AUTOCORRECT FILTER: Snap note to the strict emotion scale
+                pitch_val = snap_to_scale(pitch_val, current_scale)
+                
+                new_note = note.Note(pitch_val)
                 new_note.storedInstrument = instrument.Piano()
+                new_note.volume.velocity = vel
                 notes.append(new_note)
             new_chord = chord.Chord(notes)
             new_chord.offset = offset
-            new_chord.quarterLength = 0.5
+            new_chord.quarterLength = physical_dur
             output_notes.append(new_chord)
-        # If the AI predicted a single Note (e.g., 'C4')
         else:
             new_note = note.Note(pattern_str)
+            pitch_val = new_note.pitch.midi
+            
+            # Apply Octave Constraints
+            if mood_str == "dark": pitch_val -= 12
+            if mood_str == "dreamy": pitch_val += 12
+            
+            # THE AUTOCORRECT FILTER
+            pitch_val = snap_to_scale(pitch_val, current_scale)
+            
+            new_note = note.Note(pitch_val)
             new_note.offset = offset
-            new_note.quarterLength = 0.5
+            new_note.quarterLength = physical_dur
+            new_note.volume.velocity = vel
             new_note.storedInstrument = instrument.Piano()
             output_notes.append(new_note)
             
-        # Increase offset so notes play sequentially, not all at the exact same time
-        offset += 0.5
+        # The next note starts based on the original dur (plus rubato swing), 
+        # allowing the physical_dur to bleed over it!
+        offset += dur + random.uniform(0.0, 0.08)
         
     # 4. Convert notes to a proper MIDI file
     from music21 import stream, tempo, instrument as m21_instrument
@@ -193,7 +281,7 @@ async def generate_music(request: GenerateRequest):
     
     # Add essential MIDI headers that Web Players require
     part.insert(0, m21_instrument.Piano())
-    part.insert(0, tempo.MetronomeMark(number=request.tempo))
+    part.insert(0, tempo.MetronomeMark(number=final_tempo))
     
     # Insert all generated notes
     for n in output_notes:
@@ -211,6 +299,7 @@ async def generate_music(request: GenerateRequest):
 async def get_track():
     output_filepath = os.path.join(os.path.dirname(__file__), "generated_track.mid")
     if os.path.exists(output_filepath):
+        from fastapi.responses import FileResponse
         return FileResponse(output_filepath, media_type="audio/midi")
     return {"error": "Track not found"}
 

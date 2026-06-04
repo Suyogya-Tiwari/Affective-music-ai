@@ -352,13 +352,41 @@ input:checked + .emotion-segment {
     transform: none;
 }
 
-/* Spinner */
+/* Spinner & Waveform */
 .spinner {
     width: 18px; height: 18px;
     animation: spin 1s linear infinite;
 }
 .hidden { display: none !important; }
 @keyframes spin { 100% { transform: rotate(360deg); } }
+
+/* Premium Waveform Animation */
+.waveform-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    height: 20px;
+}
+
+.waveform-bar {
+    width: 4px;
+    background: var(--pink-400);
+    border-radius: 2px;
+    animation: waveform 1s ease-in-out infinite;
+    box-shadow: 0 0 10px var(--pink-500);
+}
+
+.waveform-bar:nth-child(1) { height: 8px; animation-delay: 0.0s; }
+.waveform-bar:nth-child(2) { height: 16px; animation-delay: 0.1s; }
+.waveform-bar:nth-child(3) { height: 24px; animation-delay: 0.2s; }
+.waveform-bar:nth-child(4) { height: 12px; animation-delay: 0.3s; }
+.waveform-bar:nth-child(5) { height: 18px; animation-delay: 0.4s; }
+
+@keyframes waveform {
+    0%, 100% { transform: scaleY(0.5); opacity: 0.5; }
+    50% { transform: scaleY(1.2); opacity: 1; }
+}
 
 /* Visualizer */
 .visualizer {

@@ -5,7 +5,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const tempoInput = document.getElementById('tempo-input');
     const generateBtn = document.getElementById('generate-btn');
     const btnText = document.getElementById('btn-text');
-    const spinner = document.getElementById('loading-spinner');
+    const spinner = document.getElementById('loading-waveform');
     const midiPlayer = document.getElementById('my-player');
 
     // Sync creativity slider and input
@@ -41,7 +41,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Determine the API URL based on where the frontend is hosted
         const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.hostname === '';
-        const API_BASE_URL = isLocalhost ? 'http://localhost:8000' : 'https://neurocomposer-api.onrender.com';
+        const API_BASE_URL = isLocalhost ? 'http://localhost:8080' : 'https://neurocomposer-api.onrender.com';
 
         try {
             // Fetch from backend
@@ -66,6 +66,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Adding a timestamp prevents the browser from caching the old track
             const trackUrl = `${API_BASE_URL}/track?t=` + new Date().getTime();
             window.currentTrackUrl = trackUrl; // Save for download button
+            window.currentTrackName = `NeuroComposer_${mood.charAt(0).toUpperCase() + mood.slice(1)}_${tempo}BPM.mid`;
             
             const midiPlayer = document.getElementById('my-player');
             const visualizer = document.getElementById('my-visualizer');
@@ -101,7 +102,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (window.currentTrackUrl) {
                 const a = document.createElement('a');
                 a.href = window.currentTrackUrl;
-                a.download = 'NeuroComposer_Track.mid';
+                a.download = window.currentTrackName || 'NeuroComposer_Track.mid';
                 document.body.appendChild(a);
                 a.click();
                 document.body.removeChild(a);

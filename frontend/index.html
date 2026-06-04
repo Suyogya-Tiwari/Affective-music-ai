@@ -93,9 +93,13 @@
 
                 <button id="generate-btn" class="btn-corporate">
                     <span id="btn-text">Generate Music</span>
-                    <svg id="loading-spinner" class="spinner hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                        <circle cx="12" cy="12" r="10" stroke-width="3" stroke-dasharray="32" stroke-linecap="round"></circle>
-                    </svg>
+                    <div id="loading-waveform" class="waveform-container hidden">
+                        <div class="waveform-bar"></div>
+                        <div class="waveform-bar"></div>
+                        <div class="waveform-bar"></div>
+                        <div class="waveform-bar"></div>
+                        <div class="waveform-bar"></div>
+                    </div>
                 </button>
                 <button id="download-btn" class="btn-corporate" style="background: var(--slate-700); margin-top: 10px;" title="Download the music file to use in professional music software like FL Studio or GarageBand.">
                     <span id="download-btn-text">Download MIDI for DAW</span>

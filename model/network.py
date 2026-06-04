@@ -2,10 +2,10 @@ from tensorflow.keras.models import Model
 from tensorflow.keras.layers import Input, Dense, Dropout, LSTM, Concatenate, Activation, Embedding, Flatten
 from tensorflow.keras.optimizers import Adam
 
-def create_network(sequence_length, vocab_size, num_emotions=2):
+def create_network(sequence_length, vocab_size, num_emotions=6):
     """
     Builds the Multi-Input LSTM Neural Network.
-    Path A: The sequence of notes (Sequential data)
+    Path A: The sequence of notes (Sequential data for high quality flow)
     Path B: The emotion ID integer (Embedding Layer)
     """
     # ---------------------------------------------------
@@ -23,8 +23,6 @@ def create_network(sequence_length, vocab_size, num_emotions=2):
     # ---------------------------------------------------
     mood_in = Input(shape=(1,), name="mood_input")
     
-    # The Embedding layer mathematically represents each emotion as a 16-dimensional vector.
-    # This automatically scales whether we have 2 emotions or 50.
     x2 = Embedding(input_dim=num_emotions, output_dim=16)(mood_in)
     x2 = Flatten()(x2)
     x2 = Dense(32, activation='relu')(x2)
@@ -42,7 +40,7 @@ def create_network(sequence_length, vocab_size, num_emotions=2):
     output = Activation('softmax', name="note_output")(y)
     
     model = Model(inputs=[notes_in, mood_in], outputs=output)
-    model.compile(loss='categorical_crossentropy', optimizer=Adam(learning_rate=0.001))
+    model.compile(loss='sparse_categorical_crossentropy', optimizer=Adam(learning_rate=0.001))
     
     return model
 

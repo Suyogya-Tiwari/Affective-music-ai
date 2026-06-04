@@ -12,7 +12,7 @@ def main():
     
     # Start the backend server in a separate process
     server_process = subprocess.Popen(
-        [python_exe, "-m", "uvicorn", "api.main:app", "--port", "8000"],
+        [python_exe, "-m", "uvicorn", "api.main:app", "--port", "8080"],
         cwd=base_dir
     )
     
