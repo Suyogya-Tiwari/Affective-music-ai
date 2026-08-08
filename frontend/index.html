@@ -5,119 +5,336 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NeuroComposer | Enterprise AI Music</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css?v=3">
     <script src="https://cdn.jsdelivr.net/combine/npm/tone@14.7.58,npm/@magenta/music@1.23.1/es6/core.js,npm/focus-visible@5,npm/html-midi-player@1.5.0"></script>
 </head>
 <body>
+    <!-- Advanced Liquid Gold Background -->
+    <div class="noise-overlay"></div>
     <div class="corporate-mesh">
         <div class="mesh-shape shape-1"></div>
         <div class="mesh-shape shape-2"></div>
-        <div class="mesh-grid"></div>
+        <div class="mesh-shape shape-3"></div>
     </div>
     
-    <div class="container">
-        <header class="app-header">
-            <div class="brand">
-                <svg class="brand-logo" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <!-- Tutorial Overlay -->
+    <div id="tutorial-overlay" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.8); z-index: 9999; display: none; flex-direction: column; justify-content: center; align-items: center; text-align: center; backdrop-filter: blur(5px);">
+        <div style="background: var(--slate-800); padding: 2rem; border-radius: 15px; border: 1px solid var(--gold-600); max-width: 500px; box-shadow: 0 20px 50px rgba(0,0,0,0.5);">
+            <h2 style="color: var(--gold-400); margin-top: 0;">How to Make Music 🎵</h2>
+            <div style="text-align: left; margin: 1.5rem 0; color: var(--slate-300); line-height: 1.6; font-size: 0.95rem;">
+                <p><strong>Step 1:</strong> Select a Core Emotion and Lead Instrument. This sets the overall vibe.</p>
+                <p><strong>Step 2:</strong> Act as the Producer! Override the AI by picking a specific <strong>Chord Progression</strong> (e.g. Pop, Jazz) and a <strong>Drum Groove</strong>.</p>
+                <p><strong>Step 3:</strong> Draw a starting melody on the Virtual Piano. The AI Co-Pilot will read your notes and finish the song for you!</p>
+                <p><strong>Step 4:</strong> Click Generate. Watch the AI plot its mathematical decisions on the <strong>Piano Roll</strong>, then use the <strong>Studio Mixer</strong> to add Reverb and Low-Pass Filters in real-time.</p>
+            </div>
+            <button id="close-tutorial-btn" class="btn-corporate" style="width: 100%; padding: 0.8rem;">Let's Make Music!</button>
+        </div>
+    </div>
+    
+    <div class="app-layout">
+        
+        <!-- NEW DAW TOP BAR -->
+        <header class="daw-top-bar">
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="width: 32px; height: 32px; color: var(--gold-400); filter: drop-shadow(0 0 10px rgba(250, 204, 21, 0.5));">
                     <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                 </svg>
-                <h1>NeuroComposer</h1>
+                <div>
+                    <h1 style="font-size: 1.4rem; margin: 0; font-weight: 800; background: linear-gradient(135deg, var(--white) 0%, var(--gold-300) 50%, var(--gold-600) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">NeuroComposer <span style="color: var(--gold-400); font-size: 0.8rem; vertical-align: top; -webkit-text-fill-color: initial;">STUDIO</span></h1>
+                </div>
             </div>
-            <p>AI-Generated Music Conditioned on Human Emotion</p>
+            
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <button id="start-tour-btn" class="btn-corporate" style="background: transparent; border: 1px solid var(--gold-600); color: var(--gold-400); padding: 0.5rem 1rem; border-radius: 20px; font-size: 0.8rem; width: auto; cursor: pointer; transition: all 0.2s;">? Quick Tour</button>
+                <div style="width: 1px; height: 20px; background: rgba(255,255,255,0.2);"></div>
+                <button id="download-btn" class="btn-corporate" style="background: var(--slate-700); padding: 0.5rem 1rem; font-size: 0.9rem; width: auto;" title="Download MIDI Project">MIDI</button>
+                <button id="download-audio-btn" class="btn-corporate" style="background: var(--slate-700); padding: 0.5rem 1rem; font-size: 0.9rem; width: auto;" title="Export Stems (.zip)">ZIP</button>
+                
+                <button id="generate-btn" class="btn-corporate" style="background: var(--gold-600); color: var(--bg-base); box-shadow: 0 0 15px rgba(250, 204, 21, 0.4); padding: 0.5rem 1.5rem; font-size: 0.9rem; font-weight: bold; border-radius: 8px; display: flex; align-items: center; justify-content: center; gap: 8px; width: auto;">
+                    <span id="btn-text">Generate Track</span>
+                    <span id="loading-waveform" class="hidden" style="display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(0,0,0,0.2); border-top-color: black; border-radius: 50%; animation: spin 1s linear infinite;"></span>
+                </button>
+                <style>@keyframes spin { 100% { transform: rotate(360deg); } } .hidden { display: none !important; }</style>
+            </div>
         </header>
 
-        <main class="dashboard">
-            <section class="panel glass-panel controls">
-                <div class="panel-heading">
-                    <h2>AI Settings</h2>
-                    <span class="status-badge">System Ready</span>
-                </div>
+        <!-- NEW DAW WORKSPACE -->
+        <div class="daw-workspace">
+            
+            <!-- LEFT INSPECTOR -->
+            <aside class="daw-inspector">
                 
-                <div class="input-group" title="Select the core emotional driver for the AI composer.">
-                    <label>Select Emotion</label>
+                <div class="input-group">
+                    <label for="instrument-select">Lead Instrument</label>
+                    <select id="instrument-select" class="custom-select dropdown-corporate">
+                        <option value="0" selected>Cinematic Grand Piano</option>
+                        <option value="4">Vintage Rhodes Lounge</option>
+                        <option value="25">Studio Acoustic Guitar</option>
+                        <option value="29">Overdriven Rock Lead</option>
+                        <option value="40">Solo Chamber Violin</option>
+                        <option value="48">Lush String Ensemble</option>
+                        <option value="73">Ethereal Flute</option>
+                        <option value="89">Warm Synth Pad</option>
+                    </select>
+                </div>
+
+                <div class="input-group">
+                    <label>Core Emotion</label>
                     <div class="emotion-grid">
                         <input type="radio" id="mood-happy" name="mood" value="happy" checked>
                         <label for="mood-happy" class="emotion-segment">Happy</label>
-                        
                         <input type="radio" id="mood-sad" name="mood" value="sad">
                         <label for="mood-sad" class="emotion-segment">Sad</label>
-
                         <input type="radio" id="mood-energetic" name="mood" value="energetic">
                         <label for="mood-energetic" class="emotion-segment">Energetic</label>
-
                         <input type="radio" id="mood-romantic" name="mood" value="romantic">
                         <label for="mood-romantic" class="emotion-segment">Romantic</label>
-
                         <input type="radio" id="mood-dark" name="mood" value="dark">
                         <label for="mood-dark" class="emotion-segment">Dark</label>
-
                         <input type="radio" id="mood-dreamy" name="mood" value="dreamy">
                         <label for="mood-dreamy" class="emotion-segment">Dreamy</label>
                     </div>
                 </div>
 
-                <div class="input-group" title="Select how long you want the generated track to be.">
-                    <label>Track Duration</label>
-                    <select id="duration-select" class="dropdown-corporate">
-                        <option value="30">30 Seconds</option>
-                        <option value="60">1 Minute</option>
-                        <option value="120">2 Minutes</option>
-                    </select>
-                </div>
-
-
-
-                <div class="input-group" title="Higher creativity makes the music more random and experimental. Lower makes it safe and classical.">
+                <div class="input-group">
                     <div class="label-row">
-                        <label for="creativity-slider">Creativity Level</label>
+                        <label for="creativity-slider">AI Creativity</label>
                         <input type="number" id="creativity-input" class="value-input" min="0.1" max="1.5" step="0.1" value="0.8">
                     </div>
                     <input type="range" id="creativity-slider" class="corporate-slider" min="0.1" max="1.5" step="0.1" value="0.8">
-                    <div class="slider-ticks">
-                        <span>Predictable</span>
-                        <span>Experimental</span>
+                </div>
+
+                <div class="input-group">
+                    <label for="chord-progression">Chord Progression</label>
+                    <select id="chord-progression" class="custom-select dropdown-corporate">
+                        <option value="auto" selected>Auto (Based on Emotion)</option>
+                        <option value="pop">Pop Hit (I-V-vi-IV)</option>
+                        <option value="jazz">Jazz Standard (ii-V-I)</option>
+                        <option value="cinematic">Epic Cinematic (i-VI-III-VII)</option>
+                        <option value="doo_wop">Doo-Wop (I-vi-IV-V)</option>
+                        <option value="rock_anthem">Rock Anthem (I-IV-V-IV)</option>
+                        <option value="rnb">Modern R&B (vi-IV-I-V)</option>
+                        <option value="spanish">Spanish/Flamenco (i-VII-VI-V)</option>
+                        <option value="neo_soul">Neo Soul (IV-III-vi-I)</option>
+                        <option value="pachelbel">Classical Pachelbel (I-V-vi-iii)</option>
+                        <option value="blues">Blues (I-IV-I-V)</option>
+                    </select>
+                </div>
+
+                <div class="input-group">
+                    <label for="drum-groove">Drum Groove</label>
+                    <select id="drum-groove" class="custom-select dropdown-corporate">
+                        <option value="auto" selected>Auto (Based on Tempo)</option>
+                        <option value="house">Four-on-the-Floor (House)</option>
+                        <option value="hiphop">Boom Bap (Hip-Hop)</option>
+                        <option value="rock">Standard (Rock/Pop)</option>
+                        <option value="trap">Trap (Syncopated)</option>
+                        <option value="reggaeton">Reggaeton / Dembow</option>
+                        <option value="disco">Classic Disco</option>
+                        <option value="dnb">Drum & Bass (170+ BPM)</option>
+                        <option value="euclidean">Euclidean Polyrhythm</option>
+                        <option value="bossa">Bossa Nova (Latin)</option>
+                        <option value="synthwave">Synthwave (80s Retrowave)</option>
+                        <option value="lofi">Lo-Fi Chill (Swung)</option>
+                    </select>
+                </div>
+
+                <div class="input-group">
+                    <label>Arrangement</label>
+                    <div class="emotion-grid" style="grid-template-columns: 1fr 1fr 1fr; gap: 8px;">
+                        <input type="radio" id="mode-solo" name="arrangement" value="solo" checked>
+                        <label for="mode-solo" class="emotion-segment" style="font-size: 0.8rem; padding: 8px 0;">Solo</label>
+                        <input type="radio" id="mode-drums" name="arrangement" value="drums">
+                        <label for="mode-drums" class="emotion-segment" style="font-size: 0.8rem; padding: 8px 0;">+ Drums</label>
+                        <input type="radio" id="mode-band" name="arrangement" value="band">
+                        <label for="mode-band" class="emotion-segment" style="font-size: 0.8rem; padding: 8px 0;">Full Band</label>
                     </div>
                 </div>
 
-                <div class="input-group" title="Adjust the Beats Per Minute (BPM) to make the song play faster or slower.">
+                <div class="input-group">
                     <div class="label-row">
                         <label for="tempo-slider">Tempo (BPM)</label>
                         <input type="number" id="tempo-input" class="value-input" min="60" max="200" step="1" value="120">
                     </div>
                     <input type="range" id="tempo-slider" class="corporate-slider" min="60" max="200" step="1" value="120">
-                    <div class="slider-ticks">
-                        <span>Slow (60)</span>
-                        <span>Fast (200)</span>
+                </div>
+
+                <div class="input-group">
+                    <label for="duration">Length</label>
+                    <select id="duration" class="custom-select dropdown-corporate">
+                        <option value="15">15 Seconds (Snippet)</option>
+                        <option value="30" selected>30 Seconds (Standard)</option>
+                        <option value="60">60 Seconds (Full Track)</option>
+                    </select>
+                </div>
+
+                <div class="input-group" style="margin-bottom: 2rem;">
+                    <div class="label-row" style="margin-bottom: 8px;">
+                        <label style="white-space: nowrap;">Melody Seed</label>
+                        <button id="record-mic-btn" class="btn-corporate" style="padding: 4px 8px; font-size: 0.7rem; background: rgba(220, 38, 38, 0.2); color: #f87171; border: 1px solid #dc2626; transition: all 0.2s ease; margin-left: 10px;"><i class="fas fa-circle" id="record-icon"></i> <span id="record-text">Record</span></button>
+                    </div>
+                    <div id="seed-dropzone" style="border: 1px dashed var(--gold-600); border-radius: 4px; padding: 15px 10px; text-align: center; margin-bottom: 15px; cursor: pointer; transition: all 0.2s ease; background: rgba(202, 138, 4, 0.05);">
+                        <i class="fas fa-file-audio" style="color: var(--gold-500); font-size: 1.2rem; margin-bottom: 5px;"></i><br>
+                        <span id="dropzone-text" style="font-size: 0.75rem; color: var(--slate-300);">Click or Drop audio here</span>
+                        <input type="file" id="hum-upload-input" accept="audio/*" class="hidden">
+                    </div>
+                    <div class="virtual-piano" id="virtual-piano" style="transform: scale(0.9); transform-origin: left top;">
+                        <div class="key white" data-note="C4"></div>
+                        <div class="key black" data-note="C#4"></div>
+                        <div class="key white" data-note="D4"></div>
+                        <div class="key black" data-note="D#4"></div>
+                        <div class="key white" data-note="E4"></div>
+                        <div class="key white" data-note="F4"></div>
+                        <div class="key black" data-note="F#4"></div>
+                        <div class="key white" data-note="G4"></div>
+                        <div class="key black" data-note="G#4"></div>
+                        <div class="key white" data-note="A4"></div>
+                        <div class="key black" data-note="A#4"></div>
+                        <div class="key white" data-note="B4"></div>
+                        <div class="key white" data-note="C5"></div>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-top: 5px;">
+                        <input type="text" id="seed-notes-input" placeholder="Primer..." readonly style="flex-grow: 1; background: rgba(0,0,0,0.3); border: 1px solid var(--glass-border); color: white; padding: 5px 10px; border-radius: 8px;">
+                        <button id="clear-seed" style="margin-left: 10px; padding: 5px 10px; background: rgba(255,0,0,0.2); border: 1px solid rgba(255,0,0,0.4); color: white; border-radius: 8px; cursor: pointer;">Clear</button>
                     </div>
                 </div>
 
-                <button id="generate-btn" class="btn-corporate">
-                    <span id="btn-text">Generate Music</span>
-                    <div id="loading-waveform" class="waveform-container hidden">
-                        <div class="waveform-bar"></div>
-                        <div class="waveform-bar"></div>
-                        <div class="waveform-bar"></div>
-                        <div class="waveform-bar"></div>
-                        <div class="waveform-bar"></div>
-                    </div>
-                </button>
-                <button id="download-btn" class="btn-corporate" style="background: var(--slate-700); margin-top: 10px;" title="Download the music file to use in professional music software like FL Studio or GarageBand.">
-                    <span id="download-btn-text">Download MIDI for DAW</span>
-                </button>
-                <p class="helper-text" style="font-size: 0.75rem; color: var(--slate-400); text-align: center; margin-top: 8px;">
-                    Import into FL Studio, Ableton, or Logic Pro for studio-grade VST synthesis.
-                </p>
-            </section>
+            </aside>
 
-            <section class="panel glass-panel visualizer" title="Watch the AI play the notes in real-time.">
-                <midi-visualizer type="waterfall" id="my-visualizer"></midi-visualizer>
-                <div class="player-wrapper">
-                    <midi-player id="my-player" sound-font="https://storage.googleapis.com/magentadata/js/soundfonts/sgm_plus" visualizer="#my-visualizer"></midi-player>
+            <!-- RIGHT STUDIO (Timeline & Mixer) -->
+            <main class="daw-studio">
+                
+                <div id="visualizer-content" style="display: flex; flex-direction: column; gap: 1.5rem; width: 100%; max-width: 1200px; margin: 0 auto; transition: opacity 0.3s;">
+                    
+                    <!-- Top Timeline: Piano Roll -->
+                    <div style="width: 100%; height: 250px; background: rgba(20,20,25,0.9); border-radius: 15px; border: 1px solid var(--glass-border); overflow: hidden; position: relative; box-shadow: inset 0 0 20px rgba(0,0,0,1);">
+                        <canvas id="piano-roll-canvas" style="width: 100%; height: 100%;"></canvas>
+                    </div>
+
+                    <!-- Middle: Master Visualizer & Transport -->
+                    <div style="display: flex; flex-direction: column; width: 100%;">
+                        <div id="transport-top-bar" class="hidden" style="display: flex; gap: 15px; align-items: center; padding-right: 10px; margin-bottom: 10px; background: rgba(0,0,0,0.3); padding: 5px 15px; border-radius: 8px;">
+                            <button id="loop-toggle-btn" class="btn-corporate" style="padding: 4px 10px; font-size: 0.7rem; background: rgba(255,255,255,0.05); color: var(--slate-400); border: 1px solid var(--slate-400);">LOOP: OFF</button>
+                            <button id="loop-in-btn" class="btn-corporate" style="padding: 4px 10px; font-size: 0.7rem; background: rgba(255,255,255,0.05); color: var(--gold-400); border: 1px solid var(--gold-400);">[ IN ]</button>
+                            <button id="loop-out-btn" class="btn-corporate" style="padding: 4px 10px; font-size: 0.7rem; background: rgba(255,255,255,0.05); color: var(--gold-400); border: 1px solid var(--gold-400);">[ OUT ]</button>
+
+                            <input type="range" id="seek-slider" min="0" max="100" value="0" style="flex-grow: 1; height: 6px; cursor: pointer; background: rgba(255,255,255,0.1); border-radius: 3px; margin-left: 15px;">
+                            <div id="playback-timer" style="font-family: 'Courier New', Courier, monospace; font-size: 0.95rem; color: var(--gold-400); font-weight: bold; letter-spacing: 1px; white-space: nowrap; margin-left: 15px;">00:00 / 00:00</div>
+                        </div>
+                        <div style="display: flex; gap: 1.5rem; align-items: stretch; width: 100%; height: 60px;">
+                            <div style="flex-grow: 1; background: rgba(0,0,0,0.8); border-radius: 10px; border: 1px solid var(--glass-border); overflow: hidden; position: relative; box-shadow: inset 0 0 20px rgba(0,0,0,1);">
+                                <canvas id="master-visualizer" style="width: 100%; height: 100%;"></canvas>
+                            </div>
+                            <div style="display: flex; gap: 10px; min-width: 220px;">
+                                <button id="daw-play-btn" class="btn-corporate" style="flex: 1; margin: 0; padding: 0.4rem; font-size: 0.85rem; border-radius: 10px;">▶ Play</button>
+                                <button id="daw-stop-btn" class="btn-corporate" style="flex: 1; margin: 0; padding: 0.4rem; font-size: 0.85rem; border-radius: 10px; background: var(--slate-700);">■ Stop</button>
+                            </div>
+                            
+                            <!-- Right: Transport/Actions -->
+                            <div style="display: flex; flex-direction: column; gap: 10px;">
+                                <!-- Master and Export moved -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Bottom: 4-Channel Mixer Console -->
+                    <div class="mixer-console" style="width: 100%; display: flex; justify-content: space-between; gap: 15px; background: rgba(15,15,20,0.95); padding: 25px; border-radius: 15px; border: 1px solid var(--glass-border); box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+                        
+                        <!-- Lead Channel -->
+                        <div class="mixer-channel" style="display: flex; flex-direction: column; align-items: center; flex: 1; border-right: 1px solid rgba(255,255,255,0.1); padding-right: 15px;">
+                            <span style="font-size: 0.85rem; font-weight: bold; color: var(--slate-300); margin-bottom: 5px; letter-spacing: 2px; text-align: center;">LEAD / VOCALS</span>
+                            <button id="lock-lead" class="lock-btn" data-locked="false" data-stem="lead" style="background: transparent; border: none; font-size: 1.2rem; cursor: pointer; opacity: 0.5; margin-bottom: 15px; transition: all 0.2s;" title="Lock Stem (Prevent overwrite)">🔓</button>
+                            <input type="range" id="vol-lead" min="0" max="1" step="0.01" value="0.8" style="-webkit-appearance: slider-vertical; appearance: slider-vertical; width: 12px; height: 150px; margin-bottom: 25px; cursor: pointer;">
+                            <button id="mute-lead" data-state="on" style="background: var(--gold-600); color: var(--bg-base); border: none; padding: 8px; width: 100%; border-radius: 6px; font-size: 0.8rem; font-weight: bold; cursor: pointer; transition: all 0.2s;">ON</button>
+                            <div style="margin-top: 20px; width: 100%; display: flex; flex-direction: column; gap: 12px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px;">
+                                <div style="font-size: 0.7rem; color: #aaa; display: flex; flex-direction: column; gap: 4px;"><span>REVERB</span><input type="range" id="rev-lead" min="0" max="1" step="0.01" value="0.3" style="width: 100%;"></div>
+                                <div style="font-size: 0.7rem; color: #aaa; display: flex; flex-direction: column; gap: 4px;"><span>DELAY</span><input type="range" id="del-lead" min="0" max="1" step="0.01" value="0" style="width: 100%;"></div>
+                                <div style="font-size: 0.7rem; color: #aaa; display: flex; flex-direction: column; gap: 4px;"><span>DISTORT</span><input type="range" id="dist-lead" min="0" max="100" step="1" value="0" style="width: 100%;"></div>
+                                <div style="font-size: 0.7rem; color: #aaa; display: flex; flex-direction: column; gap: 4px;"><span>FILTER</span><input type="range" id="lpf-lead" min="200" max="10000" step="100" value="10000" style="width: 100%;"></div>
+                            </div>
+                        </div>
+
+                        <!-- Chords Channel -->
+                        <div class="mixer-channel" style="display: flex; flex-direction: column; align-items: center; flex: 1;">
+                            <span style="font-size: 0.85rem; font-weight: bold; color: var(--slate-300); margin-bottom: 5px; letter-spacing: 2px; text-align: center;">CHORDS / OTHER</span>
+                            <button id="lock-chords" class="lock-btn" data-locked="false" data-stem="chords" style="background: transparent; border: none; font-size: 1.2rem; cursor: pointer; opacity: 0.5; margin-bottom: 15px; transition: all 0.2s;" title="Lock Stem (Prevent overwrite)">🔓</button>
+                            <input type="range" id="vol-chords" min="0" max="1" step="0.01" value="0.7" style="-webkit-appearance: slider-vertical; appearance: slider-vertical; width: 12px; height: 150px; margin-bottom: 25px; cursor: pointer;">
+                            <button id="mute-chords" data-state="on" style="background: var(--gold-600); color: var(--bg-base); border: none; padding: 8px; width: 100%; border-radius: 6px; font-size: 0.8rem; font-weight: bold; cursor: pointer; transition: all 0.2s;">ON</button>
+                            <div style="margin-top: 20px; width: 100%; display: flex; flex-direction: column; gap: 12px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px;">
+                                <div style="font-size: 0.7rem; color: #aaa; display: flex; flex-direction: column; gap: 4px;"><span>REVERB</span><input type="range" id="rev-chords" min="0" max="1" step="0.01" value="0.4" style="width: 100%;"></div>
+                                <div style="font-size: 0.7rem; color: #aaa; display: flex; flex-direction: column; gap: 4px;"><span>DELAY</span><input type="range" id="del-chords" min="0" max="1" step="0.01" value="0" style="width: 100%;"></div>
+                                <div style="font-size: 0.7rem; color: #aaa; display: flex; flex-direction: column; gap: 4px;"><span>DISTORT</span><input type="range" id="dist-chords" min="0" max="100" step="1" value="0" style="width: 100%;"></div>
+                                <div style="font-size: 0.7rem; color: #aaa; display: flex; flex-direction: column; gap: 4px;"><span>FILTER</span><input type="range" id="lpf-chords" min="200" max="10000" step="100" value="10000" style="width: 100%;"></div>
+                            </div>
+                        </div>
+
+                        <!-- Bass Channel -->
+                        <div class="mixer-channel" style="display: flex; flex-direction: column; align-items: center; flex: 1;">
+                            <span style="font-size: 0.85rem; font-weight: bold; color: var(--slate-300); margin-bottom: 5px; letter-spacing: 2px;">BASS</span>
+                            <button id="lock-bass" class="lock-btn" data-locked="false" data-stem="bass" style="background: transparent; border: none; font-size: 1.2rem; cursor: pointer; opacity: 0.5; margin-bottom: 15px; transition: all 0.2s;" title="Lock Stem (Prevent overwrite)">🔓</button>
+                            <input type="range" id="vol-bass" min="0" max="1" step="0.01" value="0.9" style="-webkit-appearance: slider-vertical; appearance: slider-vertical; width: 12px; height: 150px; margin-bottom: 25px; cursor: pointer;">
+                            <button id="mute-bass" data-state="on" style="background: var(--gold-600); color: var(--bg-base); border: none; padding: 8px; width: 100%; border-radius: 6px; font-size: 0.8rem; font-weight: bold; cursor: pointer; transition: all 0.2s;">ON</button>
+                            <div style="margin-top: 20px; width: 100%; display: flex; flex-direction: column; gap: 12px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px;">
+                                <div style="font-size: 0.7rem; color: #aaa; display: flex; flex-direction: column; gap: 4px;"><span>REVERB</span><input type="range" id="rev-bass" min="0" max="1" step="0.01" value="0.1" style="width: 100%;"></div>
+                                <div style="font-size: 0.7rem; color: #aaa; display: flex; flex-direction: column; gap: 4px;"><span>DELAY</span><input type="range" id="del-bass" min="0" max="1" step="0.01" value="0" style="width: 100%;"></div>
+                                <div style="font-size: 0.7rem; color: #aaa; display: flex; flex-direction: column; gap: 4px;"><span>DISTORT</span><input type="range" id="dist-bass" min="0" max="100" step="1" value="0" style="width: 100%;"></div>
+                                <div style="font-size: 0.7rem; color: #aaa; display: flex; flex-direction: column; gap: 4px;"><span>FILTER</span><input type="range" id="lpf-bass" min="200" max="10000" step="100" value="10000" style="width: 100%;"></div>
+                            </div>
+                        </div>
+
+                        <!-- Drums Channel -->
+                        <div class="mixer-channel" style="display: flex; flex-direction: column; align-items: center; flex: 1; border-left: 1px solid rgba(255,255,255,0.1); padding-left: 15px;">
+                            <span style="font-size: 0.85rem; font-weight: bold; color: var(--slate-300); margin-bottom: 5px; letter-spacing: 2px;">DRUMS</span>
+                            <button id="lock-drums" class="lock-btn" data-locked="false" data-stem="drums" style="background: transparent; border: none; font-size: 1.2rem; cursor: pointer; opacity: 0.5; margin-bottom: 15px; transition: all 0.2s;" title="Lock Stem (Prevent overwrite)">🔓</button>
+                            <input type="range" id="vol-drums" min="0" max="1" step="0.01" value="0.9" style="-webkit-appearance: slider-vertical; appearance: slider-vertical; width: 12px; height: 150px; margin-bottom: 25px; cursor: pointer;">
+                            <button id="mute-drums" data-state="on" style="background: var(--gold-600); color: var(--bg-base); border: none; padding: 8px; width: 100%; border-radius: 6px; font-size: 0.8rem; font-weight: bold; cursor: pointer; transition: all 0.2s;">ON</button>
+                            <div style="margin-top: 20px; width: 100%; display: flex; flex-direction: column; gap: 12px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px;">
+                                <div style="font-size: 0.7rem; color: #aaa; display: flex; flex-direction: column; gap: 4px;"><span>REVERB</span><input type="range" id="rev-drums" min="0" max="1" step="0.01" value="0.2" style="width: 100%;"></div>
+                                <div style="font-size: 0.7rem; color: #aaa; display: flex; flex-direction: column; gap: 4px;"><span>DELAY</span><input type="range" id="del-drums" min="0" max="1" step="0.01" value="0" style="width: 100%;"></div>
+                                <div style="font-size: 0.7rem; color: #aaa; display: flex; flex-direction: column; gap: 4px;"><span>DISTORT</span><input type="range" id="dist-drums" min="0" max="100" step="1" value="0" style="width: 100%;"></div>
+                                <div style="font-size: 0.7rem; color: #aaa; display: flex; flex-direction: column; gap: 4px;"><span>FILTER</span><input type="range" id="lpf-drums" min="200" max="10000" step="100" value="10000" style="width: 100%;"></div>
+                            </div>
+                        </div>
+
+                        <!-- Master FX Channel -->
+                        <div class="mixer-channel" style="display: flex; flex-direction: column; align-items: center; flex: 1.5; border-left: 2px solid rgba(255,255,255,0.1); padding-left: 15px; margin-left: 10px;">
+                            <span style="font-size: 0.85rem; font-weight: bold; color: var(--gold-400); margin-bottom: 20px; letter-spacing: 2px;">MASTER FX</span>
+                            <div style="width: 100%; display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 10px;">
+                                <div style="font-size: 0.7rem; color: var(--white); display: flex; flex-direction: column; gap: 4px; align-items: center;">
+                                    <span>COMPRESSOR</span>
+                                    <input type="range" id="master-comp" min="0" max="1" step="0.01" value="0" style="width: 100%;">
+                                </div>
+                                <div style="font-size: 0.7rem; color: var(--white); display: flex; flex-direction: column; gap: 4px; align-items: center;">
+                                    <span>LOW EQ</span>
+                                    <input type="range" id="master-eq-low" min="-12" max="12" step="1" value="0" style="width: 100%;">
+                                </div>
+                                <div style="font-size: 0.7rem; color: var(--white); display: flex; flex-direction: column; gap: 4px; align-items: center;">
+                                    <span>MID EQ</span>
+                                    <input type="range" id="master-eq-mid" min="-12" max="12" step="1" value="0" style="width: 100%;">
+                                </div>
+                                <div style="font-size: 0.7rem; color: var(--white); display: flex; flex-direction: column; gap: 4px; align-items: center;">
+                                    <span>HIGH EQ</span>
+                                    <input type="range" id="master-eq-high" min="-12" max="12" step="1" value="0" style="width: 100%;">
+                                </div>
+                                <div style="font-size: 0.7rem; color: var(--white); display: flex; flex-direction: column; gap: 4px; align-items: center;">
+                                    <span>DELAY</span>
+                                    <input type="range" id="master-delay" min="0" max="1" step="0.01" value="0" style="width: 100%;">
+                                </div>
+                                <div style="font-size: 0.7rem; color: var(--white); display: flex; flex-direction: column; gap: 4px; align-items: center;">
+                                    <span>DISTORTION</span>
+                                    <input type="range" id="master-distortion" min="0" max="100" step="1" value="0" style="width: 100%;">
+                                </div>
+                            </div>
+                            <button id="master-btn" class="btn-corporate" style="margin-top: auto; margin-bottom: 10px; width: 100%; background: rgba(147, 51, 234, 0.2); color: #c084fc; border-color: #9333ea; font-weight: bold;"><i class="fas fa-robot"></i> AI Master Mix</button>
+                            <span style="font-size: 0.7rem; color: #888; text-align: center; padding-top: 5px; border-top: 1px solid rgba(255,255,255,0.1); width: 100%;">Applies to full mix</span>
+                        </div>
+                    </div>
                 </div>
-            </section>
-        </main>
+
+            </main>
+        </div>
     </div>
 
-    <script src="script.js"></script>
+    <script src="script.js?v=4"></script>
 </body>
 </html>
