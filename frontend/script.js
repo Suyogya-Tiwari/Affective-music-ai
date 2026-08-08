@@ -136,7 +136,8 @@ document.addEventListener('DOMContentLoaded', () => {
         spinner.classList.remove('hidden');
 
         // Always use the local backend server that we just optimized with the JIT compiler!
-        const API_BASE_URL = 'http://127.0.0.1:8080';
+        const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.hostname === '' || window.location.protocol === 'file:';
+        const API_BASE_URL = isLocalhost ? 'http://127.0.0.1:8080' : 'https://neurocomposer-api.onrender.com';
         
         const lockedArray = [];
         document.querySelectorAll('.lock-btn').forEach(btn => {
@@ -198,149 +199,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Handle Remix Upload
 
-    // Handle Voice-to-MIDI Melody Seed
-    const humInput = document.getElementById('hum-upload-input');
-    const dropzone = document.getElementById('seed-dropzone');
-    const dropzoneText = document.getElementById('dropzone-text');
-    const recordBtn = document.getElementById('record-mic-btn');
-    const recordText = document.getElementById('record-text');
-    const recordIcon = document.getElementById('record-icon');
-    
-    let mediaRecorder;
-    let audioChunks = [];
-    let isRecording = false;
-    
-    async function processSeedAudio(fileOrBlob) {
-        if (!fileOrBlob) return;
-        
-        const originalText = dropzoneText.innerHTML;
-        dropzoneText.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
-        dropzone.style.pointerEvents = 'none';
-        
-        const API_BASE_URL = 'http://127.0.0.1:8080';
-        const formData = new FormData();
-        formData.append('file', fileOrBlob, fileOrBlob.name || 'recorded_hum.webm');
-        
-        try {
-            const response = await fetch(`${API_BASE_URL}/upload_audio_seed`, {
-                method: 'POST',
-                body: formData
-            });
-            
-            if (!response.ok) throw new Error(`Server responded with ${response.status}`);
-            
-            const data = await response.json();
-            
-            if (data.notes && data.notes.length > 0) {
-                recordedNotes = data.notes;
-                
-                document.querySelectorAll('.key').forEach(k => {
-                    k.classList.remove('active');
-                    k.style.boxShadow = "none";
-                });
-                
-                recordedNotes.forEach(note => {
-                    const key = document.querySelector(`.key[data-note="${note}"]`);
-                    if (key) {
-                        key.classList.add('active');
-                        key.style.boxShadow = "0 0 15px var(--gold-500)";
-                        setTimeout(() => {
-                            key.style.boxShadow = "none";
-                        }, 3000);
-                    }
-                });
-                
-                dropzoneText.innerHTML = '<span style="color: var(--gold-400);"><i class="fas fa-check"></i> Notes Extracted!</span>';
-            } else {
-                dropzoneText.innerHTML = '<span style="color: #f87171;"><i class="fas fa-times"></i> No Pitch Detected</span>';
-            }
-        } catch (err) {
-            console.error("Error extracting pitch:", err);
-            dropzoneText.innerHTML = '<span style="color: #f87171;"><i class="fas fa-exclamation-triangle"></i> Error Processing</span>';
-        } finally {
-            setTimeout(() => {
-                dropzoneText.innerHTML = originalText;
-                dropzone.style.pointerEvents = 'auto';
-            }, 3000);
-        }
-    }
-    
-    if (dropzone && humInput) {
-        dropzone.addEventListener('click', () => humInput.click());
-        
-        dropzone.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            dropzone.style.backgroundColor = 'rgba(202, 138, 4, 0.2)';
-            dropzone.style.borderColor = 'var(--gold-400)';
-        });
-        
-        ['dragleave', 'dragend'].forEach(type => {
-            dropzone.addEventListener(type, (e) => {
-                e.preventDefault();
-                dropzone.style.backgroundColor = 'rgba(202, 138, 4, 0.05)';
-                dropzone.style.borderColor = 'var(--gold-600)';
-            });
-        });
-        
-        dropzone.addEventListener('drop', (e) => {
-            e.preventDefault();
-            dropzone.style.backgroundColor = 'rgba(202, 138, 4, 0.05)';
-            dropzone.style.borderColor = 'var(--gold-600)';
-            if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-                processSeedAudio(e.dataTransfer.files[0]);
-            }
-        });
-        
-        humInput.addEventListener('change', (e) => {
-            if (e.target.files && e.target.files[0]) {
-                processSeedAudio(e.target.files[0]);
-            }
-        });
-    }
 
-    if (recordBtn) {
-        recordBtn.addEventListener('click', async () => {
-            if (isRecording) {
-                mediaRecorder.stop();
-                isRecording = false;
-                recordText.textContent = "Record";
-                recordBtn.style.background = "rgba(220, 38, 38, 0.2)";
-                recordIcon.classList.remove('fa-beat-fade');
-                return;
-            }
-            
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                mediaRecorder = new MediaRecorder(stream);
-                audioChunks = [];
-                
-                mediaRecorder.ondataavailable = e => {
-                    if (e.data.size > 0) audioChunks.push(e.data);
-                };
-                
-                mediaRecorder.onstop = () => {
-                    const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
-                    stream.getTracks().forEach(track => track.stop());
-                    processSeedAudio(audioBlob);
-                };
-                
-                mediaRecorder.start();
-                isRecording = true;
-                
-                recordText.textContent = "Stop";
-                recordBtn.style.background = "rgba(220, 38, 38, 0.4)";
-                recordIcon.classList.add('fa-beat-fade');
-                
-                setTimeout(() => {
-                    if (isRecording) recordBtn.click();
-                }, 5000);
-                
-            } catch (err) {
-                console.error("Microphone access denied or error:", err);
-                alert("Microphone access is required to record a melody seed.");
-            }
-        });
-    }
 
     // --- PIANO ROLL SEQUENCER ---
     function drawPianoRoll(data) {
@@ -470,9 +329,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let maxDuration = 0;
     let pauseOffset = 0;
     let isDraggingSeek = false;
-    let loopStart = 0;
-    let loopEnd = 0;
-    let isLooping = false;
+
     let masterBuffer = null;
     let lastGeneratedData = null;
     
@@ -489,14 +346,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         let elapsed = audioCtx.currentTime - startTime;
         
-        if (isLooping && loopEnd > loopStart) {
-            const loopDuration = loopEnd - loopStart;
-            if (elapsed >= loopEnd) {
-                elapsed = loopStart + ((elapsed - loopEnd) % loopDuration);
-            }
-        }
-        
-        if (!isLooping && elapsed > maxDuration) {
+        if (elapsed > maxDuration) {
             elapsed = maxDuration;
             stopAll(true); // reset to 0 at the end
             return;
@@ -643,132 +493,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if (topBar) topBar.classList.remove('hidden');
     }
 
-    function createReverbIR(audioCtx) {
-        const length = audioCtx.sampleRate * 2.5; 
-        const impulse = audioCtx.createBuffer(2, length, audioCtx.sampleRate);
-        for (let i = 0; i < 2; i++) {
-            const channel = impulse.getChannelData(i);
-            for (let j = 0; j < length; j++) {
-                channel[j] = (Math.random() * 2 - 1) * Math.pow(1 - j / length, 3);
-            }
-        }
-        return impulse;
-    }
-
     function setupMixer() {
-        const stems = ['lead', 'chords', 'bass', 'drums'];
-        stems.forEach(stem => {
-            const fader = document.getElementById(`vol-${stem}`);
-            const muteBtn = document.getElementById(`mute-${stem}`);
-            const revFader = document.getElementById(`rev-${stem}`);
-            const lpfFader = document.getElementById(`lpf-${stem}`);
-            
-            const delFader = document.getElementById(`del-${stem}`);
-            const distFader = document.getElementById(`dist-${stem}`);
-            
-            if (!stemGains[stem]) {
-                const master = audioCtx.createGain();
-                const filter = audioCtx.createBiquadFilter();
-                const dist = audioCtx.createWaveShaper();
-                const delay = audioCtx.createDelay(5.0);
-                const delayGain = audioCtx.createGain();
-                const delayWet = audioCtx.createGain();
-                const wet = audioCtx.createGain();
-                const dry = audioCtx.createGain();
-                const convolver = audioCtx.createConvolver();
-                
-                filter.type = 'lowpass';
-                filter.frequency.value = 10000;
-                dist.curve = makeDistortionCurve(0);
-                dist.oversample = '4x';
-                
-                delay.delayTime.value = 0.33;
-                delayGain.gain.value = 0.4;
-                delayWet.gain.value = 0;
-                
-                convolver.buffer = createReverbIR(audioCtx);
-                
-                // Route: Filter -> Dist -> Master (Dry) & Reverb
-                filter.connect(dist);
-                
-                // Dist to Delay
-                dist.connect(delay);
-                delay.connect(delayGain);
-                delayGain.connect(delay);
-                delay.connect(delayWet);
-                
-                // Dry + Delay -> Reverb & Master
-                dist.connect(dry);
-                delayWet.connect(dry);
-                
-                dist.connect(convolver);
-                delayWet.connect(convolver);
-                
-                convolver.connect(wet);
-                dry.connect(master);
-                wet.connect(master);
-                master.connect(masterGain);
-                
-                wet.gain.value = 0.2;
-                dry.gain.value = 0.8;
-                
-                stemGains[stem] = { master, filter, wet, dry, dist, delayWet };
-            }
-            
-            if (fader && muteBtn) {
-                fader.addEventListener('input', (e) => {
-                    if (muteBtn.dataset.state === 'on') {
-                        stemGains[stem].master.gain.value = parseFloat(e.target.value);
-                    }
-                });
-                
-                if (revFader) {
-                    revFader.addEventListener('input', (e) => {
-                        const val = parseFloat(e.target.value);
-                        stemGains[stem].wet.gain.value = val;
-                        stemGains[stem].dry.gain.value = 1 - val;
-                    });
-                }
-                
-                if (lpfFader) {
-                    lpfFader.addEventListener('input', (e) => {
-                        stemGains[stem].filter.frequency.value = parseFloat(e.target.value);
-                    });
-                }
-                
-                if (delFader) {
-                    delFader.addEventListener('input', (e) => {
-                        stemGains[stem].delayWet.gain.value = parseFloat(e.target.value);
-                    });
-                }
-                
-                if (distFader) {
-                    distFader.addEventListener('input', (e) => {
-                        stemGains[stem].dist.curve = makeDistortionCurve(parseFloat(e.target.value) / 100);
-                    });
-                }
-                
-                // Remove old listeners to prevent stacking
-                const newMuteBtn = muteBtn.cloneNode(true);
-                muteBtn.parentNode.replaceChild(newMuteBtn, muteBtn);
-                
-                newMuteBtn.addEventListener('click', () => {
-                    if (newMuteBtn.dataset.state === 'on') {
-                        newMuteBtn.dataset.state = 'muted';
-                        newMuteBtn.style.background = 'var(--slate-700)';
-                        newMuteBtn.style.color = 'var(--slate-300)';
-                        newMuteBtn.textContent = 'M';
-                        stemGains[stem].master.gain.value = 0;
-                    } else {
-                        newMuteBtn.dataset.state = 'on';
-                        newMuteBtn.style.background = 'var(--gold-600)';
-                        newMuteBtn.style.color = 'var(--bg-base)';
-                        newMuteBtn.textContent = 'ON';
-                        stemGains[stem].master.gain.value = fader ? parseFloat(fader.value) : 1;
-                    }
-                });
-            }
-        });
+        // Simplified for interview: We no longer route through complex DSP nodes.
+        // Audio will connect directly to the master gain in playAll()
     }
 
     function playAll() {
@@ -783,47 +510,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 const source = audioCtx.createBufferSource();
                 source.buffer = stemBuffers[stem];
                 
-                if (isLooping) {
-                    source.loop = true;
-                    source.loopStart = loopStart;
-                    source.loopEnd = loopEnd > loopStart ? loopEnd : maxDuration;
-                }
+
                 
-                source.connect(stemGains[stem].filter);
+                // Connect straight to master for simplified version
+                source.connect(masterGain);
                 source.start(0, currentOffset);
                 stemSources[stem] = source;
-                
-                // sync fader initially
-                const fader = document.getElementById(`vol-${stem}`);
-                const muteBtn = document.getElementById(`mute-${stem}`);
-                const revFader = document.getElementById(`rev-${stem}`);
-                const lpfFader = document.getElementById(`lpf-${stem}`);
-                
-                const delFader = document.getElementById(`del-${stem}`);
-                const distFader = document.getElementById(`dist-${stem}`);
-                
-                if (muteBtn && muteBtn.dataset.state === 'on') {
-                    stemGains[stem].master.gain.value = fader ? parseFloat(fader.value) : 1;
-                } else {
-                    stemGains[stem].master.gain.value = 0;
-                }
-                
-                if (revFader) {
-                    stemGains[stem].wet.gain.value = parseFloat(revFader.value);
-                    stemGains[stem].dry.gain.value = 1 - parseFloat(revFader.value);
-                }
-                
-                if (lpfFader) {
-                    stemGains[stem].filter.frequency.value = parseFloat(lpfFader.value);
-                }
-                
-                if (delFader) {
-                    stemGains[stem].delayWet.gain.value = parseFloat(delFader.value);
-                }
-                
-                if (distFader) {
-                    stemGains[stem].dist.curve = makeDistortionCurve(parseFloat(distFader.value) / 100);
-                }
             }
         });
         isPlaying = true;
@@ -884,57 +576,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const percent = e.target.value / 100;
             pauseOffset = percent * maxDuration;
             if (isPlaying) {
-                stopAll(false);
-                playAll();
-            }
-        });
-    }
-
-    // A/B Looping Controls
-    const loopToggleBtn = document.getElementById('loop-toggle-btn');
-    const loopInBtn = document.getElementById('loop-in-btn');
-    const loopOutBtn = document.getElementById('loop-out-btn');
-
-    if (loopToggleBtn) {
-        loopToggleBtn.addEventListener('click', () => {
-            isLooping = !isLooping;
-            loopToggleBtn.textContent = isLooping ? 'LOOP: ON' : 'LOOP: OFF';
-            loopToggleBtn.style.color = isLooping ? 'var(--gold-400)' : 'var(--slate-400)';
-            loopToggleBtn.style.borderColor = isLooping ? 'var(--gold-400)' : 'var(--slate-400)';
-            if (isPlaying) {
-                stopAll(false);
-                playAll(); // Restart to apply loop settings
-            }
-        });
-    }
-
-    if (loopInBtn) {
-        loopInBtn.addEventListener('click', () => {
-            if (!audioCtx) return;
-            let elapsed = isPlaying ? audioCtx.currentTime - startTime : pauseOffset;
-            loopStart = elapsed;
-            loopInBtn.style.background = 'rgba(250, 204, 21, 0.3)';
-            setTimeout(() => loopInBtn.style.background = 'rgba(255,255,255,0.1)', 200);
-            if (isPlaying && isLooping) {
-                stopAll(false);
-                playAll();
-            }
-        });
-    }
-
-    if (loopOutBtn) {
-        loopOutBtn.addEventListener('click', () => {
-            if (!audioCtx) return;
-            let elapsed = isPlaying ? audioCtx.currentTime - startTime : pauseOffset;
-            loopEnd = elapsed;
-            loopOutBtn.style.background = 'rgba(250, 204, 21, 0.3)';
-            setTimeout(() => loopOutBtn.style.background = 'rgba(255,255,255,0.1)', 200);
-            
-            // Auto-enable loop if both points are set
-            if (!isLooping && loopEnd > loopStart) {
-                loopToggleBtn.click();
-            }
-            if (isPlaying && isLooping) {
                 stopAll(false);
                 playAll();
             }
@@ -1045,114 +686,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // --- AI AUTOMATED MASTERING ---
-    const masterBtn = document.getElementById('master-btn');
-    const masterOverlay = document.getElementById('mastering-overlay');
-    const masterProgBar = document.getElementById('mastering-progress-bar');
-    const masterTimeTxt = document.getElementById('mastering-time');
-    const masterStatusTxt = document.getElementById('mastering-status-text');
-    const masterDownloadBtn = document.getElementById('mastering-download-btn');
-    const masterCloseBtn = document.getElementById('mastering-close-btn');
-
-    if (masterBtn && masterOverlay) {
-        masterBtn.addEventListener('click', async () => {
-            if (!audioCtx || maxDuration === 0) {
-                alert("You need to generate a track first!");
-                return;
-            }
-
-            masterOverlay.classList.remove('hidden');
-            masterProgBar.style.width = '0%';
-            masterProgBar.parentElement.classList.remove('hidden');
-            masterDownloadBtn.classList.add('hidden');
-            masterCloseBtn.classList.add('hidden');
-            masterStatusTxt.textContent = "[ RECORDING WEB AUDIO STREAM ]";
-            masterStatusTxt.style.color = "#c084fc";
-
-            stopAll(true);
-
-            const dest = audioCtx.createMediaStreamDestination();
-            masterCompressor.connect(dest);
-            masterDelayWet.connect(dest);
-            
-            const recorder = new MediaRecorder(dest.stream);
-            let chunks = [];
-            recorder.ondataavailable = e => { if (e.data.size > 0) chunks.push(e.data); };
-            
-            recorder.onstop = async () => {
-                masterStatusTxt.textContent = "[ APPLYING AI LIMITER & EQ GLUE... ]";
-                masterStatusTxt.style.color = "var(--gold-400)";
-                masterProgBar.parentElement.classList.add('hidden');
-                
-                const blob = new Blob(chunks, { type: 'audio/webm' });
-                const formData = new FormData();
-                formData.append('file', blob, 'master_mix.webm');
-                
-                try {
-                    const res = await fetch('http://127.0.0.1:8080/master_track', {
-                        method: 'POST',
-                        body: formData
-                    });
-                    
-                    if (!res.ok) throw new Error("Backend mastering failed");
-                    
-                    const audioBlob = await res.blob();
-                    const url = URL.createObjectURL(audioBlob);
-                    
-                    // Decode into masterBuffer and redraw
-                    const arrayBuffer = await audioBlob.arrayBuffer();
-                    masterBuffer = await audioCtx.decodeAudioData(arrayBuffer);
-                    if (lastGeneratedData) {
-                        drawPianoRoll(lastGeneratedData);
-                    }
-                    
-                    masterStatusTxt.textContent = "[ MASTERING COMPLETE! ]";
-                    masterStatusTxt.style.color = "#4ade80"; 
-                    
-                    masterDownloadBtn.href = url;
-                    masterDownloadBtn.download = "Mastered_NeuroComposer_Track.wav";
-                    masterDownloadBtn.classList.remove('hidden');
-                    masterCloseBtn.classList.remove('hidden');
-                    
-                } catch(err) {
-                    console.error("Mastering Error:", err);
-                    masterStatusTxt.textContent = "[ ERROR: FAILED TO MASTER ]";
-                    masterStatusTxt.style.color = "#f87171";
-                    masterCloseBtn.classList.remove('hidden');
-                }
-                
-                masterCompressor.disconnect(dest);
-                masterDelayWet.disconnect(dest);
-            };
-
-            recorder.start();
-            isLooping = false; 
-            playAll();
-            
-            const recInterval = setInterval(() => {
-                if (!isPlaying) {
-                    clearInterval(recInterval);
-                    recorder.stop();
-                    return;
-                }
-                let elapsed = audioCtx.currentTime - startTime;
-                if (elapsed >= maxDuration) elapsed = maxDuration;
-                
-                masterProgBar.style.width = `${(elapsed / maxDuration) * 100}%`;
-                masterTimeTxt.textContent = `${formatTime(elapsed)} / ${formatTime(maxDuration)}`;
-                
-                if (elapsed >= maxDuration) {
-                    clearInterval(recInterval);
-                    stopAll(true);
-                    recorder.stop();
-                }
-            }, 50);
-        });
-        
-        masterCloseBtn.addEventListener('click', () => {
-            masterOverlay.classList.add('hidden');
-        });
-    }
+    // (Automated Mastering Removed for Simplicity)
 
     // --- HOVER TOOLTIPS (Expanded for whole project) ---
     const tooltips = {
@@ -1166,13 +700,9 @@ document.addEventListener('DOMContentLoaded', () => {
         'drum-groove': 'Force a specific drum pattern style',
         'tempo-slider': 'Adjust the speed of the track (BPM)',
         'duration': 'Set the length of the generated track',
-        'record-mic-btn': 'Record a 5-second melody using your microphone',
-        'seed-dropzone': 'Drag and drop an audio file to use as a melody seed',
         'virtual-piano': 'Click the keys to draw a starting melody',
         'clear-seed': 'Clear the current melody seed',
-        'loop-toggle-btn': 'Toggle loop mode on/off',
-        'loop-in-btn': 'Set loop start point',
-        'loop-out-btn': 'Set loop end point',
+
         'seek-slider': 'Scrub through the track timeline',
         'daw-play-btn': 'Play the live mixer',
         'daw-stop-btn': 'Stop playback',
@@ -1180,19 +710,6 @@ document.addEventListener('DOMContentLoaded', () => {
         'lock-chords': 'Lock Chords stem so it is not overwritten on next generate',
         'lock-bass': 'Lock Bass stem so it is not overwritten on next generate',
         'lock-drums': 'Lock Drums stem so it is not overwritten on next generate',
-        'mute-lead': 'Toggle Mute for Lead',
-        'mute-chords': 'Toggle Mute for Chords',
-        'mute-bass': 'Toggle Mute for Bass',
-        'mute-drums': 'Toggle Mute for Drums',
-        'vol-lead': 'Lead Volume Fader',
-        'vol-chords': 'Chords Volume Fader',
-        'vol-bass': 'Bass Volume Fader',
-        'vol-drums': 'Drums Volume Fader',
-        'rev-lead': 'Lead Reverb Amount', 'del-lead': 'Lead Delay Amount', 'dist-lead': 'Lead Distortion Amount', 'lpf-lead': 'Lead Low-Pass Filter',
-        'rev-chords': 'Chords Reverb Amount', 'del-chords': 'Chords Delay Amount', 'dist-chords': 'Chords Distortion Amount', 'lpf-chords': 'Chords Low-Pass Filter',
-        'rev-bass': 'Bass Reverb Amount', 'del-bass': 'Bass Delay Amount', 'dist-bass': 'Bass Distortion Amount', 'lpf-bass': 'Bass Low-Pass Filter',
-        'rev-drums': 'Drums Reverb Amount', 'del-drums': 'Drums Delay Amount', 'dist-drums': 'Drums Distortion Amount', 'lpf-drums': 'Drums Low-Pass Filter',
-        'master-comp': 'Master Compressor Threshold',
         'master-eq-low': 'Master EQ Low Shelf (Bass)',
         'master-eq-mid': 'Master EQ Peaking (Mids)',
         'master-eq-high': 'Master EQ High Shelf (Treble)',

@@ -1,66 +1,33 @@
-# NeuroComposer
+# AI-Composer (NeuroComposer)
 
-NeuroComposer is a full-stack web application that uses a deep learning LSTM (Long Short-Term Memory) neural network to generate classical piano music based on selected emotion and tempo constraints.
+A full-stack web application that uses Machine Learning to generate music based on emotions.
 
-The model is trained on the Lakh MIDI Dataset. The backend parses MIDI data into tensors, predicts note sequences, and generates downloadable `.mid` files for use in Digital Audio Workstations (DAWs).
+This project allows users to select an emotion, and the AI backend will generate a unique piece of music that matches the mood.
 
-**Application Link:** [neurocomposer.vercel.app](https://neurocomposer.vercel.app)
+## Features
+- **Emotion-based Generation**: Choose from Happy, Sad, Energetic, Romantic, Dark, or Dreamy.
+- **RESTful API Engine**: A Python FastAPI backend handles the heavy lifting of the Machine Learning model.
+- **Interactive UI**: A Vanilla HTML/JS frontend where users can play back the generated audio.
+- **Customization**: Users can select instruments and tempos to further guide the generation.
 
----
+## How It Works
+1. **Frontend**: The user makes a selection on the web interface.
+2. **Backend**: The FastAPI server receives the request.
+3. **AI Model**: A Neural Network predicts a sequence of musical notes that fit the selected emotion.
+4. **Synthesis**: The Python backend uses FluidSynth to convert the raw notes into an audio file (.wav).
+5. **Playback**: The frontend receives the audio file and plays it for the user.
 
-## Technical Features
-- **LSTM Neural Network:** A sequential model trained on 2,500+ classical tracks to predict chord progressions and melodies.
-- **Constrained Decoding:** A heuristic mathematical filter that intercepts the model's raw output and snaps predicted notes into the specific music theory scale of the requested emotion (e.g., C Minor for Sad, C Lydian for Dreamy).
-- **MIDI Heuristics:** Dynamically adjusts MIDI Control Change (Sustain Pedal) and note velocities based on emotion parameters to simulate human playback.
-- **Temperature Sampling:** Logarithmic probability adjustment allowing users to control the variance (creativity) of the generated sequences.
-- **Web Interface:** A frontend application featuring real-time MIDI visualization powered by Magenta.js.
+## Running Locally
 
----
-
-## Architecture
-
-The application uses a decoupled frontend/backend architecture.
-
-```mermaid
-graph TD
-    subgraph Frontend ["Vercel"]
-        UI["Dashboard UI"]
-        Player["Magenta.js Web Player"]
-    end
-
-    subgraph Backend ["Render API"]
-        API["FastAPI Endpoint"]
-        Filter["Constrained Decoder"]
-        Music21["music21 Parser"]
-        Brain["TensorFlow LSTM Model"]
-    end
-
-    UI -->|"1. POST /generate"| API
-    API -->|"2. Injects Seed"| Brain
-    Brain -->|"3. Predicts Raw Notes"| Filter
-    Filter -->|"4. Snaps to Emotion Scale"| Music21
-    Music21 -->|"5. Compiles .mid File"| API
-    API -->|"6. 200 OK"| UI
-    UI -->|"7. GET /track"| Player
-    Player -->|"8. Renders Audio/Visuals"| UI
-```
-
----
-
-## Local Development
-
-### 1. Clone the Repository
+1. Create a virtual environment and install the requirements:
 ```bash
-git clone https://github.com/Suyogya-Tiwari/Affective-music-ai.git
-cd Affective-music-ai
-```
-
-### 2. Install Dependencies
-```bash
+python -m venv venv
+.\venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-### 3. Run the Application
+2. Run the application:
 ```bash
-python run_app.py
+python scripts/run_app.py
 ```
+This will start the local Python server and automatically open the interface in your web browser.

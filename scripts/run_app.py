@@ -6,6 +6,8 @@ import webbrowser
 
 def main():
     base_dir = os.path.dirname(os.path.abspath(__file__))
+    if os.path.basename(base_dir) == 'scripts':
+        base_dir = os.path.dirname(base_dir)
     python_exe = os.path.join(base_dir, "venv", "Scripts", "python.exe")
     
     print("Starting NeuroComposer AI Backend...")

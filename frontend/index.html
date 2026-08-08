@@ -25,7 +25,7 @@
                 <p><strong>Step 1:</strong> Select a Core Emotion and Lead Instrument. This sets the overall vibe.</p>
                 <p><strong>Step 2:</strong> Act as the Producer! Override the AI by picking a specific <strong>Chord Progression</strong> (e.g. Pop, Jazz) and a <strong>Drum Groove</strong>.</p>
                 <p><strong>Step 3:</strong> Draw a starting melody on the Virtual Piano. The AI Co-Pilot will read your notes and finish the song for you!</p>
-                <p><strong>Step 4:</strong> Click Generate. Watch the AI plot its mathematical decisions on the <strong>Piano Roll</strong>, then use the <strong>Studio Mixer</strong> to add Reverb and Low-Pass Filters in real-time.</p>
+                <p><strong>Step 4:</strong> Click Generate. Watch the AI plot its mathematical decisions on the <strong>Piano Roll</strong> and hear the generated stems in real-time.</p>
             </div>
             <button id="close-tutorial-btn" class="btn-corporate" style="width: 100%; padding: 0.8rem;">Let's Make Music!</button>
         </div>
@@ -68,12 +68,8 @@
                     <label for="instrument-select">Lead Instrument</label>
                     <select id="instrument-select" class="custom-select dropdown-corporate">
                         <option value="0" selected>Cinematic Grand Piano</option>
-                        <option value="4">Vintage Rhodes Lounge</option>
                         <option value="25">Studio Acoustic Guitar</option>
                         <option value="29">Overdriven Rock Lead</option>
-                        <option value="40">Solo Chamber Violin</option>
-                        <option value="48">Lush String Ensemble</option>
-                        <option value="73">Ethereal Flute</option>
                         <option value="89">Warm Synth Pad</option>
                     </select>
                 </div>
@@ -171,12 +167,6 @@
                 <div class="input-group" style="margin-bottom: 2rem;">
                     <div class="label-row" style="margin-bottom: 8px;">
                         <label style="white-space: nowrap;">Melody Seed</label>
-                        <button id="record-mic-btn" class="btn-corporate" style="padding: 4px 8px; font-size: 0.7rem; background: rgba(220, 38, 38, 0.2); color: #f87171; border: 1px solid #dc2626; transition: all 0.2s ease; margin-left: 10px;"><i class="fas fa-circle" id="record-icon"></i> <span id="record-text">Record</span></button>
-                    </div>
-                    <div id="seed-dropzone" style="border: 1px dashed var(--gold-600); border-radius: 4px; padding: 15px 10px; text-align: center; margin-bottom: 15px; cursor: pointer; transition: all 0.2s ease; background: rgba(202, 138, 4, 0.05);">
-                        <i class="fas fa-file-audio" style="color: var(--gold-500); font-size: 1.2rem; margin-bottom: 5px;"></i><br>
-                        <span id="dropzone-text" style="font-size: 0.75rem; color: var(--slate-300);">Click or Drop audio here</span>
-                        <input type="file" id="hum-upload-input" accept="audio/*" class="hidden">
                     </div>
                     <div class="virtual-piano" id="virtual-piano" style="transform: scale(0.9); transform-origin: left top;">
                         <div class="key white" data-note="C4"></div>
@@ -214,9 +204,7 @@
                     <!-- Middle: Master Visualizer & Transport -->
                     <div style="display: flex; flex-direction: column; width: 100%;">
                         <div id="transport-top-bar" class="hidden" style="display: flex; gap: 15px; align-items: center; padding-right: 10px; margin-bottom: 10px; background: rgba(0,0,0,0.3); padding: 5px 15px; border-radius: 8px;">
-                            <button id="loop-toggle-btn" class="btn-corporate" style="padding: 4px 10px; font-size: 0.7rem; background: rgba(255,255,255,0.05); color: var(--slate-400); border: 1px solid var(--slate-400);">LOOP: OFF</button>
-                            <button id="loop-in-btn" class="btn-corporate" style="padding: 4px 10px; font-size: 0.7rem; background: rgba(255,255,255,0.05); color: var(--gold-400); border: 1px solid var(--gold-400);">[ IN ]</button>
-                            <button id="loop-out-btn" class="btn-corporate" style="padding: 4px 10px; font-size: 0.7rem; background: rgba(255,255,255,0.05); color: var(--gold-400); border: 1px solid var(--gold-400);">[ OUT ]</button>
+
 
                             <input type="range" id="seek-slider" min="0" max="100" value="0" style="flex-grow: 1; height: 6px; cursor: pointer; background: rgba(255,255,255,0.1); border-radius: 3px; margin-left: 15px;">
                             <div id="playback-timer" style="font-family: 'Courier New', Courier, monospace; font-size: 0.95rem; color: var(--gold-400); font-weight: bold; letter-spacing: 1px; white-space: nowrap; margin-left: 15px;">00:00 / 00:00</div>
@@ -237,98 +225,7 @@
                         </div>
                     </div>
 
-                    <!-- Bottom: 4-Channel Mixer Console -->
-                    <div class="mixer-console" style="width: 100%; display: flex; justify-content: space-between; gap: 15px; background: rgba(15,15,20,0.95); padding: 25px; border-radius: 15px; border: 1px solid var(--glass-border); box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
-                        
-                        <!-- Lead Channel -->
-                        <div class="mixer-channel" style="display: flex; flex-direction: column; align-items: center; flex: 1; border-right: 1px solid rgba(255,255,255,0.1); padding-right: 15px;">
-                            <span style="font-size: 0.85rem; font-weight: bold; color: var(--slate-300); margin-bottom: 5px; letter-spacing: 2px; text-align: center;">LEAD / VOCALS</span>
-                            <button id="lock-lead" class="lock-btn" data-locked="false" data-stem="lead" style="background: transparent; border: none; font-size: 1.2rem; cursor: pointer; opacity: 0.5; margin-bottom: 15px; transition: all 0.2s;" title="Lock Stem (Prevent overwrite)">🔓</button>
-                            <input type="range" id="vol-lead" min="0" max="1" step="0.01" value="0.8" style="-webkit-appearance: slider-vertical; appearance: slider-vertical; width: 12px; height: 150px; margin-bottom: 25px; cursor: pointer;">
-                            <button id="mute-lead" data-state="on" style="background: var(--gold-600); color: var(--bg-base); border: none; padding: 8px; width: 100%; border-radius: 6px; font-size: 0.8rem; font-weight: bold; cursor: pointer; transition: all 0.2s;">ON</button>
-                            <div style="margin-top: 20px; width: 100%; display: flex; flex-direction: column; gap: 12px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px;">
-                                <div style="font-size: 0.7rem; color: #aaa; display: flex; flex-direction: column; gap: 4px;"><span>REVERB</span><input type="range" id="rev-lead" min="0" max="1" step="0.01" value="0.3" style="width: 100%;"></div>
-                                <div style="font-size: 0.7rem; color: #aaa; display: flex; flex-direction: column; gap: 4px;"><span>DELAY</span><input type="range" id="del-lead" min="0" max="1" step="0.01" value="0" style="width: 100%;"></div>
-                                <div style="font-size: 0.7rem; color: #aaa; display: flex; flex-direction: column; gap: 4px;"><span>DISTORT</span><input type="range" id="dist-lead" min="0" max="100" step="1" value="0" style="width: 100%;"></div>
-                                <div style="font-size: 0.7rem; color: #aaa; display: flex; flex-direction: column; gap: 4px;"><span>FILTER</span><input type="range" id="lpf-lead" min="200" max="10000" step="100" value="10000" style="width: 100%;"></div>
-                            </div>
-                        </div>
 
-                        <!-- Chords Channel -->
-                        <div class="mixer-channel" style="display: flex; flex-direction: column; align-items: center; flex: 1;">
-                            <span style="font-size: 0.85rem; font-weight: bold; color: var(--slate-300); margin-bottom: 5px; letter-spacing: 2px; text-align: center;">CHORDS / OTHER</span>
-                            <button id="lock-chords" class="lock-btn" data-locked="false" data-stem="chords" style="background: transparent; border: none; font-size: 1.2rem; cursor: pointer; opacity: 0.5; margin-bottom: 15px; transition: all 0.2s;" title="Lock Stem (Prevent overwrite)">🔓</button>
-                            <input type="range" id="vol-chords" min="0" max="1" step="0.01" value="0.7" style="-webkit-appearance: slider-vertical; appearance: slider-vertical; width: 12px; height: 150px; margin-bottom: 25px; cursor: pointer;">
-                            <button id="mute-chords" data-state="on" style="background: var(--gold-600); color: var(--bg-base); border: none; padding: 8px; width: 100%; border-radius: 6px; font-size: 0.8rem; font-weight: bold; cursor: pointer; transition: all 0.2s;">ON</button>
-                            <div style="margin-top: 20px; width: 100%; display: flex; flex-direction: column; gap: 12px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px;">
-                                <div style="font-size: 0.7rem; color: #aaa; display: flex; flex-direction: column; gap: 4px;"><span>REVERB</span><input type="range" id="rev-chords" min="0" max="1" step="0.01" value="0.4" style="width: 100%;"></div>
-                                <div style="font-size: 0.7rem; color: #aaa; display: flex; flex-direction: column; gap: 4px;"><span>DELAY</span><input type="range" id="del-chords" min="0" max="1" step="0.01" value="0" style="width: 100%;"></div>
-                                <div style="font-size: 0.7rem; color: #aaa; display: flex; flex-direction: column; gap: 4px;"><span>DISTORT</span><input type="range" id="dist-chords" min="0" max="100" step="1" value="0" style="width: 100%;"></div>
-                                <div style="font-size: 0.7rem; color: #aaa; display: flex; flex-direction: column; gap: 4px;"><span>FILTER</span><input type="range" id="lpf-chords" min="200" max="10000" step="100" value="10000" style="width: 100%;"></div>
-                            </div>
-                        </div>
-
-                        <!-- Bass Channel -->
-                        <div class="mixer-channel" style="display: flex; flex-direction: column; align-items: center; flex: 1;">
-                            <span style="font-size: 0.85rem; font-weight: bold; color: var(--slate-300); margin-bottom: 5px; letter-spacing: 2px;">BASS</span>
-                            <button id="lock-bass" class="lock-btn" data-locked="false" data-stem="bass" style="background: transparent; border: none; font-size: 1.2rem; cursor: pointer; opacity: 0.5; margin-bottom: 15px; transition: all 0.2s;" title="Lock Stem (Prevent overwrite)">🔓</button>
-                            <input type="range" id="vol-bass" min="0" max="1" step="0.01" value="0.9" style="-webkit-appearance: slider-vertical; appearance: slider-vertical; width: 12px; height: 150px; margin-bottom: 25px; cursor: pointer;">
-                            <button id="mute-bass" data-state="on" style="background: var(--gold-600); color: var(--bg-base); border: none; padding: 8px; width: 100%; border-radius: 6px; font-size: 0.8rem; font-weight: bold; cursor: pointer; transition: all 0.2s;">ON</button>
-                            <div style="margin-top: 20px; width: 100%; display: flex; flex-direction: column; gap: 12px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px;">
-                                <div style="font-size: 0.7rem; color: #aaa; display: flex; flex-direction: column; gap: 4px;"><span>REVERB</span><input type="range" id="rev-bass" min="0" max="1" step="0.01" value="0.1" style="width: 100%;"></div>
-                                <div style="font-size: 0.7rem; color: #aaa; display: flex; flex-direction: column; gap: 4px;"><span>DELAY</span><input type="range" id="del-bass" min="0" max="1" step="0.01" value="0" style="width: 100%;"></div>
-                                <div style="font-size: 0.7rem; color: #aaa; display: flex; flex-direction: column; gap: 4px;"><span>DISTORT</span><input type="range" id="dist-bass" min="0" max="100" step="1" value="0" style="width: 100%;"></div>
-                                <div style="font-size: 0.7rem; color: #aaa; display: flex; flex-direction: column; gap: 4px;"><span>FILTER</span><input type="range" id="lpf-bass" min="200" max="10000" step="100" value="10000" style="width: 100%;"></div>
-                            </div>
-                        </div>
-
-                        <!-- Drums Channel -->
-                        <div class="mixer-channel" style="display: flex; flex-direction: column; align-items: center; flex: 1; border-left: 1px solid rgba(255,255,255,0.1); padding-left: 15px;">
-                            <span style="font-size: 0.85rem; font-weight: bold; color: var(--slate-300); margin-bottom: 5px; letter-spacing: 2px;">DRUMS</span>
-                            <button id="lock-drums" class="lock-btn" data-locked="false" data-stem="drums" style="background: transparent; border: none; font-size: 1.2rem; cursor: pointer; opacity: 0.5; margin-bottom: 15px; transition: all 0.2s;" title="Lock Stem (Prevent overwrite)">🔓</button>
-                            <input type="range" id="vol-drums" min="0" max="1" step="0.01" value="0.9" style="-webkit-appearance: slider-vertical; appearance: slider-vertical; width: 12px; height: 150px; margin-bottom: 25px; cursor: pointer;">
-                            <button id="mute-drums" data-state="on" style="background: var(--gold-600); color: var(--bg-base); border: none; padding: 8px; width: 100%; border-radius: 6px; font-size: 0.8rem; font-weight: bold; cursor: pointer; transition: all 0.2s;">ON</button>
-                            <div style="margin-top: 20px; width: 100%; display: flex; flex-direction: column; gap: 12px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px;">
-                                <div style="font-size: 0.7rem; color: #aaa; display: flex; flex-direction: column; gap: 4px;"><span>REVERB</span><input type="range" id="rev-drums" min="0" max="1" step="0.01" value="0.2" style="width: 100%;"></div>
-                                <div style="font-size: 0.7rem; color: #aaa; display: flex; flex-direction: column; gap: 4px;"><span>DELAY</span><input type="range" id="del-drums" min="0" max="1" step="0.01" value="0" style="width: 100%;"></div>
-                                <div style="font-size: 0.7rem; color: #aaa; display: flex; flex-direction: column; gap: 4px;"><span>DISTORT</span><input type="range" id="dist-drums" min="0" max="100" step="1" value="0" style="width: 100%;"></div>
-                                <div style="font-size: 0.7rem; color: #aaa; display: flex; flex-direction: column; gap: 4px;"><span>FILTER</span><input type="range" id="lpf-drums" min="200" max="10000" step="100" value="10000" style="width: 100%;"></div>
-                            </div>
-                        </div>
-
-                        <!-- Master FX Channel -->
-                        <div class="mixer-channel" style="display: flex; flex-direction: column; align-items: center; flex: 1.5; border-left: 2px solid rgba(255,255,255,0.1); padding-left: 15px; margin-left: 10px;">
-                            <span style="font-size: 0.85rem; font-weight: bold; color: var(--gold-400); margin-bottom: 20px; letter-spacing: 2px;">MASTER FX</span>
-                            <div style="width: 100%; display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 10px;">
-                                <div style="font-size: 0.7rem; color: var(--white); display: flex; flex-direction: column; gap: 4px; align-items: center;">
-                                    <span>COMPRESSOR</span>
-                                    <input type="range" id="master-comp" min="0" max="1" step="0.01" value="0" style="width: 100%;">
-                                </div>
-                                <div style="font-size: 0.7rem; color: var(--white); display: flex; flex-direction: column; gap: 4px; align-items: center;">
-                                    <span>LOW EQ</span>
-                                    <input type="range" id="master-eq-low" min="-12" max="12" step="1" value="0" style="width: 100%;">
-                                </div>
-                                <div style="font-size: 0.7rem; color: var(--white); display: flex; flex-direction: column; gap: 4px; align-items: center;">
-                                    <span>MID EQ</span>
-                                    <input type="range" id="master-eq-mid" min="-12" max="12" step="1" value="0" style="width: 100%;">
-                                </div>
-                                <div style="font-size: 0.7rem; color: var(--white); display: flex; flex-direction: column; gap: 4px; align-items: center;">
-                                    <span>HIGH EQ</span>
-                                    <input type="range" id="master-eq-high" min="-12" max="12" step="1" value="0" style="width: 100%;">
-                                </div>
-                                <div style="font-size: 0.7rem; color: var(--white); display: flex; flex-direction: column; gap: 4px; align-items: center;">
-                                    <span>DELAY</span>
-                                    <input type="range" id="master-delay" min="0" max="1" step="0.01" value="0" style="width: 100%;">
-                                </div>
-                                <div style="font-size: 0.7rem; color: var(--white); display: flex; flex-direction: column; gap: 4px; align-items: center;">
-                                    <span>DISTORTION</span>
-                                    <input type="range" id="master-distortion" min="0" max="100" step="1" value="0" style="width: 100%;">
-                                </div>
-                            </div>
-                            <button id="master-btn" class="btn-corporate" style="margin-top: auto; margin-bottom: 10px; width: 100%; background: rgba(147, 51, 234, 0.2); color: #c084fc; border-color: #9333ea; font-weight: bold;"><i class="fas fa-robot"></i> AI Master Mix</button>
-                            <span style="font-size: 0.7rem; color: #888; text-align: center; padding-top: 5px; border-top: 1px solid rgba(255,255,255,0.1); width: 100%;">Applies to full mix</span>
-                        </div>
-                    </div>
                 </div>
 
             </main>

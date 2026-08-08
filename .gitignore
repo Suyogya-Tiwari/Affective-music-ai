@@ -21,5 +21,12 @@ data/raw_midi/*
 # model/*.h5
 # model/*.keras
 *.npz
-unsorted_midi/  
- 
+unsorted_midi/
+*.wav
+*.mid
+*.mp3
+*.m4a
+midi_exports/
+batch_exports/
+scratch/
+api/temp_demucs/api/synth/soundfont.sf2
